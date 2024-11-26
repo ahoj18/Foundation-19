@@ -1,0 +1,6 @@
+author: quadbium
+delete-after: true
+changes:
+  - rscadd: Adjusted human species description
+  - rscadd: Adjusted vat-grown species description
+  - rscadd: Adjusted machine species description
