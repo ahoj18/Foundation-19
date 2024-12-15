@@ -1,4 +1,3 @@
-author: K4rlox
-delete-after: true
-changes:
+2024-12-15:
+  K4rlox:
   - rscadd: SCP-458 currently only admin spawn
