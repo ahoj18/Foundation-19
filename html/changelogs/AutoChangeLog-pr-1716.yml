@@ -1,5 +1,0 @@
-author: checkraisefold
-delete-after: true
-changes:
-  - bugfix: Medical Director/Assistant Medical Director access is fixed, allowing
-      them to access the Command & Communications computer program.
