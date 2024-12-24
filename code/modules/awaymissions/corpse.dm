@@ -35,7 +35,7 @@
 	var/genders_per_species       = list() // For gender biases per species -type-
 
 	// Spawn damage
-	var/brute_loss = 0
+	var/brute_loss = 300
 	var/burn_loss = 0
 
 /obj/effect/landmark/corpse/Initialize()
@@ -106,6 +106,9 @@
 
 	var/decl/hierarchy/outfit/corpse_outfit = outfit_by_type(pickweight(corpse_outfits))
 	corpse_outfit.equip(M, equip_adjustments = adjustments)
+
+/obj/effect/landmark/corpse/proc/AdditionalEffects(mob/living/carbon/human/H)
+	return
 
 /obj/effect/landmark/corpse/pirate
 	name = "Pirate"

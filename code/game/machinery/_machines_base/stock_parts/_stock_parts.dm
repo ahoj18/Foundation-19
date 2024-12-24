@@ -45,7 +45,7 @@
 // Use to process on the machine it's installed on.
 
 /obj/item/stock_parts/proc/start_processing(obj/machinery/machine)
-	LAZYDISTINCTADD(machine.processing_parts, src)
+	LAZYOR(machine.processing_parts, src)
 	START_PROCESSING_MACHINE(machine, MACHINERY_PROCESS_COMPONENTS)
 	set_status(machine, PART_STAT_PROCESSING)
 
@@ -60,3 +60,33 @@
 
 // RefreshParts has been called, likely meaning other componenets were added/removed.
 /obj/item/stock_parts/proc/on_refresh(obj/machinery/machine)
+
+// Assoc list of all stock parts by their rating
+GLOBAL_LIST_EMPTY(stock_parts_by_rating)
+
+// 1:1 - Returns absolutely random stock part with same rating
+// Fine - Returns its own base type of higher rating
+/obj/item/stock_parts/Conversion914(mode = MODE_ONE_TO_ONE, mob/user = usr)
+	switch(mode)
+		if(MODE_ONE_TO_ONE)
+			if(!length(GLOB.stock_parts_by_rating))
+				for(var/thing in subtypesof(/obj/item/stock_parts))
+					var/obj/item/stock_parts/S = thing
+					if(!(num2text(initial(S.rating)) in GLOB.stock_parts_by_rating))
+						GLOB.stock_parts_by_rating[num2text(initial(S.rating))] = list()
+					GLOB.stock_parts_by_rating[num2text(initial(S.rating))] += S
+			if(!length(GLOB.stock_parts_by_rating[num2text(rating)]))
+				return src
+			return pick(GLOB.stock_parts_by_rating[num2text(rating)])
+		if(MODE_FINE)
+			if(!base_type)
+				return src
+			for(var/thing in typesof(base_type))
+				var/obj/item/stock_parts/S = thing
+				if(initial(S.rating) > rating + 1)
+					continue
+				if(initial(S.rating) <= rating)
+					continue
+				return S
+			return src
+	return ..()

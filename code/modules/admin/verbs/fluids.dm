@@ -6,7 +6,9 @@
 	if(!check_rights(R_SPAWN)) return
 	var/mob/user = usr
 	if(istype(user) && user.client)
-		for(var/thing in trange(1, get_turf(user)))
+		var/turf/main_turf = get_turf(user)
+		log_and_message_staff("has spawned water at [main_turf.x],[main_turf.y],[main_turf.z] in [main_turf.loc]")
+		for(var/thing in RANGE_TURFS(get_turf(user), 1))
 			var/turf/T = thing
 			T.add_fluid(2000, /datum/reagent/water)
 
@@ -87,7 +89,7 @@ GLOBAL_LIST_INIT(submerged_levels, new)
 			if(A && (A.area_flags & AREA_FLAG_EXTERNAL))
 				if(A.base_turf)
 					A.base_turf = /turf/simulated/ocean/non_flooded
-				if(!istype(T, /turf/space))
+				if(!isspaceturf(T))
 					T.make_flooded()
 
 	// Generate the sea floor on the highest z-level in the set.
@@ -110,7 +112,7 @@ GLOBAL_LIST_INIT(submerged_levels, new)
 			if(A && (A.area_flags & AREA_FLAG_EXTERNAL))
 				if(A.base_turf)
 					A.base_turf = /turf/simulated/open
-				if(istype(T, /turf/space))
+				if(isspaceturf(T))
 					T.ChangeTurf(/turf/simulated/open/flooded)
 				else if(istype(T, /turf/simulated/open))
 					T.make_flooded()

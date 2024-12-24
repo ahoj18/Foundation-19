@@ -20,6 +20,7 @@
 #define GRAB_NAB			"nab"
 #define GRAB_NAB_SPECIAL	"special nab"
 #define GRAB_ABOMINATION	"terrifying grab"
+#define GRAB_PLAGUE_DOCTOR	"plague arm"
 
 // Grab levels.
 #define NORM_PASSIVE    "normal passive"
@@ -35,6 +36,9 @@
 #define GRAB_ABOMINATION_PASSIVE 	"terrifying grab passive"
 #define GRAB_ABOMINATION_AGGRESSIVE "terrifying grab aggressive"
 #define GRAB_ABOMINATION_KILL 		"terrifying grab kill"
+
+#define GRAB_PLAGUE_DOCTOR_PASSIVE		"plague arm passive"
+#define GRAB_PLAGUE_DOCTOR_AGGRESSIVE	"plague arm aggressive"
 
 #define BORGMESON       (1<<0)
 #define BORGTHERM       (1<<1)
@@ -115,8 +119,10 @@
 #define APPEARANCE_COMMON (APPEARANCE_DNA2|APPEARANCE_RACE|APPEARANCE_GENDER|APPEARANCE_SKIN|APPEARANCE_ALL_HAIR|APPEARANCE_EYES|APPEARANCE_LANG)
 
 // Click cooldown
-#define DEFAULT_ATTACK_COOLDOWN 8 //Default timeout for aggressive actions
-#define DEFAULT_QUICK_COOLDOWN  4
+#define CLICK_CD_ATTACK 8 //Default timeout for aggressive actions
+#define CLICK_CD_RESIST 20
+#define CLICK_CD_QUICK  4
+#define CLICK_CD_HANDCUFFED 10
 
 #define FAST_WEAPON_COOLDOWN 3
 #define DEFAULT_WEAPON_COOLDOWN 5
@@ -183,8 +189,9 @@
 #define V_INSL_IMPERFECT 	1
 #define V_INSL_PERFECT 		2
 
-#define ANIMAL_SPAWN_DELAY round(config.respawn_delay / 6)
-#define DRONE_SPAWN_DELAY  round(config.respawn_delay / 3)
+#define ANIMAL_SPAWN_DELAY	round(config.respawn_delay / 6)
+#define DRONE_SPAWN_DELAY	round(config.respawn_delay / 3)
+#define SCP_SPAWN_DELAY		round(config.respawn_delay / 3)
 
 // Incapacitation flags, used by the mob/proc/incapacitated() proc
 #define INCAPACITATION_NONE                 0
@@ -356,9 +363,11 @@
 #define SPECIES_ABOMINATION "Abomination"
 #define SPECIES_MONKEY      "Monkey"
 #define SPECIES_FBP         "Full Body Prosthesis"
+#define SPECIES_SCP049_1 	"SCP-049-1"
+#define SPECIES_ZOMBIE 		"Zombie"
 
 #define UNRESTRICTED_SPECIES list(SPECIES_HUMAN, SPECIES_DIONA, SPECIES_IPC, SPECIES_UNATHI, SPECIES_YEOSA, SPECIES_SKRELL, SPECIES_TRITONIAN, SPECIES_SPACER, SPECIES_VATGROWN, SPECIES_GRAVWORLDER, SPECIES_MULE)
-#define RESTRICTED_SPECIES   list(SPECIES_VOX, SPECIES_ALIEN, SPECIES_GOLEM, SPECIES_MANTID_GYNE, SPECIES_MANTID_ALATE, SPECIES_MONARCH_WORKER, SPECIES_MONARCH_QUEEN, SPECIES_ABOMINATION)
+#define RESTRICTED_SPECIES   list(SPECIES_VOX, SPECIES_ALIEN, SPECIES_GOLEM, SPECIES_MANTID_GYNE, SPECIES_MANTID_ALATE, SPECIES_MONARCH_WORKER, SPECIES_MONARCH_QUEEN, SPECIES_ABOMINATION, SPECIES_ZOMBIE, SPECIES_SCP049_1)
 #define HUMAN_SPECIES        list(SPECIES_HUMAN, SPECIES_VATGROWN, SPECIES_SPACER, SPECIES_GRAVWORLDER, SPECIES_MULE, SPECIES_ABOMINATION)
 
 #define SPECIES_NABBER         "Giant armoured serpentid"
@@ -433,8 +442,15 @@
 // used in /mob/living/carbon/human/can_inject, and by various callers of that proc
 #define CAN_INJECT              1
 #define INJECTION_PORT          2
-#define INJECTION_PORT_DELAY    3 SECONDS // used by injectors to apply delay due to searching for a port on the injectee's suit
+#define INJECTION_PORT_DELAY    (3 SECONDS) // used by injectors to apply delay due to searching for a port on the injectee's suit
 
 #define FAKE_INVIS_ALPHA_THRESHOLD 127 // If something's alpha var is at or below this number, certain things will pretend it is invisible.
 
 #define ADJUSTED_GLIDE_SIZE(DELAY) (CEILING((WORLD_ICON_SIZE / max((DELAY), world.tick_lag) * world.tick_lag) - world.tick_lag, 1) + (config.glide_size_delay))
+
+/// Returns whether or not the given mob can succumb
+#define CAN_SUCCUMB(target) (HAS_TRAIT(target, TRAIT_CRITICAL_CONDITION))
+/// Returns true if the given mob is incapacitated or dead.
+#define IS_DEAD_OR_INCAP(mob) (mob.incapacitated() || mob.stat)
+
+#define SLEEP_CHECK_DEATH(X) sleep(X); if(QDELETED(src) || stat == DEAD) return;

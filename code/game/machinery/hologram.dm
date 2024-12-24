@@ -348,7 +348,7 @@ For the other part of the code, check silicon say.dm. Particularly robot talk.*/
 	var/message
 	if(isanimal(M) && !M.universal_speak)
 		var/datum/say_list/SA = M.say_list
-		if (SA)
+		if(LAZYLEN(SA.speak))
 			message = get_hear_message(name_used, pick(SA.speak), verb, speaking)
 	else
 		message = get_hear_message(name_used, text, verb, speaking)
@@ -465,7 +465,7 @@ For the other part of the code, check silicon say.dm. Particularly robot talk.*/
 	return 1
 
 
-/obj/machinery/hologram/holopad/proc/set_dir_hologram(new_dir, mob/living/silicon/ai/user)
+/obj/machinery/hologram/holopad/proc/setDir_hologram(new_dir, mob/living/silicon/ai/user)
 	if(masters[user])
 		var/obj/effect/overlay/hologram = masters[user]
 		hologram.dir = new_dir

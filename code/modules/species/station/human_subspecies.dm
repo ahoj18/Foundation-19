@@ -17,7 +17,7 @@
 	brute_mod =     0.85
 	slowdown =      1
 	strength = STR_HIGH
-
+	spawn_flags = SPECIES_IS_WHITELISTED
 	descriptors = list(
 		/datum/mob_descriptor/height = -1,
 		/datum/mob_descriptor/build = 1
@@ -47,6 +47,7 @@
 	burn_mod =  1.1
 	darksight_range = 6
 	darksight_tint = DARKTINT_MODERATE
+	spawn_flags = SPECIES_IS_WHITELISTED
 
 	descriptors = list(
 		/datum/mob_descriptor/height,
@@ -65,20 +66,19 @@
 	name = SPECIES_VATGROWN
 	name_plural = "Vat-Grown Humans"
 	description = "With cloning on the forefront of human scientific advancement, mass production \
-	of bodies is a very real and rather ethically grey industry. Although slavery, indentured servitude \
-	and flash-cloning are all illegal in SCG space, there still exists a margin for those legitimate \
-	corporations able to take up contracts for growing and raising vat-grown humans to populate new \
-	colonies or installations. Many vat-grown humans come from one of these projects, making up the \
-	majority of those referred to as the nonborn - those with singular names and an identifier, such as \
-	ID-John, BQ1-Bob or Thomas-582 - while others, bearing more human-sounding names, are created for \
-	and raised as members of regular human families. Still others are the lab-created designer progeny \
-	of the SCG's rich elite.<br/><br/>Vat-grown humans tend to be paler than baseline, though those \
+	of bodies is a very real and rather ethically grey industry. Many vat-grown humans come from \
+	SCP-2000, making up the majority of those referred to as the nonborn. Others are produced by \
+	Prometheus Labs or by Marshall, Carter and Dark. \
+	Those with singular names and an identifier, such as ID-John, BQ1-Bob or Thomas-582 are created as \
+	servile test subjects, or to furfill specific functions. While those bearing more human-sounding \
+	names are the lab-created designer progeny of the SCP foundation's elite.<br/>\
+	<br/>Vat-grown humans tend to be paler than baseline, though those \
 	with darker skin better display the dull, greenish hue resulting from their artificial growth. \
 	Vat-grown humans have no appendix and fewer inherited genetic disabilities but have a weakened \
 	metabolism."
 	icobase =     'icons/mob/human_races/species/human/subspecies/vatgrown_body.dmi'
 	preview_icon= 'icons/mob/human_races/species/human/subspecies/vatgrown_preview.dmi'
-
+	spawn_flags = SPECIES_IS_WHITELISTED
 	toxins_mod =   1.1
 	has_organ = list(
 		BP_HEART =    /obj/item/organ/internal/heart,
@@ -138,6 +138,7 @@
 		)
 
 	appearance_flags = HAS_HAIR_COLOR | HAS_SKIN_TONE_TRITON | HAS_LIPS | HAS_UNDERWEAR | HAS_EYE_COLOR
+	spawn_flags = SPECIES_IS_WHITELISTED
 
 /datum/species/human/tritonian/can_float(mob/living/carbon/human/H)
 	if(!H.is_physically_disabled())
@@ -155,7 +156,7 @@
 	civilization, and are physically diminutive and unimposing, with scrawny, often deformed bodies. Their physiology \
 	rejects prosthetics and synthetic organs, and their lifespans are short, but their raw psionic potential is unmatched."
 
-	spawn_flags =   SPECIES_CAN_JOIN | SPECIES_NO_FBP_CONSTRUCTION | SPECIES_NO_FBP_CHARGEN | SPECIES_NO_ROBOTIC_INTERNAL_ORGANS
+	spawn_flags =   SPECIES_CAN_JOIN | SPECIES_NO_FBP_CONSTRUCTION | SPECIES_NO_FBP_CHARGEN | SPECIES_NO_ROBOTIC_INTERNAL_ORGANS | SPECIES_IS_WHITELISTED
 	brute_mod =     1.25
 	burn_mod =      1.25
 	oxy_mod =       1.25

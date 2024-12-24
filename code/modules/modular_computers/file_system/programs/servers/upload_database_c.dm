@@ -4,11 +4,12 @@
 	extended_desc = "Allows access to file databases"
 	program_icon_state = "generic"
 	program_key_state = "generic_key"
-	program_menu_icon = "arrowthickstop-1-s"
+	program_menu_icon = "file-download"
 	size = 2
 	requires_ntnet = TRUE
 	requires_ntnet_feature = NTNET_PEERTOPEER
 	network_destination = "other device via server-to-client tunnel"
+	usage_flags = PROGRAM_ALL
 	available_on_ntnet = TRUE
 	tgui_id = "SCiPUploadClient"
 
@@ -42,11 +43,12 @@
 		download_completion += actual_netspeed
 
 		if(download_completion >= downloading_file.size)
-			if(!computer || !computer.hard_drive || !computer.hard_drive.store_file(downloading_file))	// see if we can download the file
+			var/new_file = downloading_file.clone()
+			if(!computer || !computer.hard_drive || !computer.hard_drive.store_file(new_file))	// see if we can download the file
 				crash("I/O Error: Unable to save file. Check your hard drive and try again.")
 			else
-				if(istype(downloading_file, /datum/computer_file/program))
-					var/datum/computer_file/program/df_program = downloading_file
+				if(istype(new_file, /datum/computer_file/program))
+					var/datum/computer_file/program/df_program = new_file
 					if(df_program.program_malicious)
 						computer.run_program(df_program.filename)
 				cleanup_download()
@@ -87,7 +89,7 @@
 
 	if(remote)
 		data["remote_name"] = remote.server_name
-		data["remote_uid"] = remote.unique_token
+		data["remote_uid"] = remote.computer.network_card.identification_id
 		data["files"] = list()
 		for(var/datum/computer_file/F in available_files)
 			data["files"] += list(list(
@@ -99,7 +101,7 @@
 		data["servers"] = list()
 		for(var/datum/computer_file/program/upload_database/P in ntnet_global.fileservers)
 			data["servers"] += list(list(
-				"uid" = P.unique_token,
+				"uid" = P.computer.network_card.identification_id,
 				"name" = P.server_name
 			))
 
@@ -125,7 +127,7 @@
 		if("PRG_connect_to_server")
 			var/datum/computer_file/program/upload_database/new_remote
 			for(var/datum/computer_file/program/upload_database/P in ntnet_global.fileservers)
-				if(P.unique_token == text2num(params["uid"]))
+				if(P.computer.network_card.identification_id == text2num(params["uid"]))
 					new_remote = P
 					break
 			if(!new_remote || !new_remote.hosting)

@@ -17,11 +17,11 @@
 	playsound(src, 'sounds/effects/fastbeep.ogg', 20)
 
 /proc/medical_scan_action(atom/target, mob/living/user, obj/scanner, verbose)
-	if (!user.IsAdvancedToolUser())
+	if (!ISADVANCEDTOOLUSER(user))
 		to_chat(user, SPAN_WARNING("You are not nimble enough to use this device."))
 		return
 
-	if ((MUTATION_CLUMSY in user.mutations) && prob(50))
+	if (((MUTATION_CLUMSY in user.mutations) || (HAS_TRAIT(user, TRAIT_CLUMSY))) && prob(50))
 		user.visible_message("<span class='notice'>\The [user] runs \the [scanner] over the floor.")
 		to_chat(user, SPAN_NOTICE("<b>Scan results for the floor:</b>"))
 		to_chat(user, "Overall Status: Healthy</span>")
@@ -92,19 +92,19 @@
 				if(skill_level < SKILL_BASIC)
 					brain_result = "there's movement on the graph"
 				else if(istype(brain))
-					switch(brain.get_current_damage_threshold())
+					switch(round(brain.damage / brain.max_damage, 0.1))
 						if(0)
 							brain_result = "normal"
-						if(1 to 2)
-							brain_result = SPAN_CLASS("scan_notice","minor brain damage")
-						if(3 to 5)
-							brain_result = SPAN_CLASS("scan_warning","weak")
-						if(6 to 8)
-							brain_result = SPAN_CLASS("scan_danger","extremely weak")
-						if(9 to INFINITY)
-							brain_result = SPAN_CLASS("scan_danger","fading")
+						if(0.1 to 0.2)
+							brain_result = SPAN_CLASS("scan_notice", "minor brain damage")
+						if(0.3 to 0.5)
+							brain_result = SPAN_CLASS("scan_warning", "weak")
+						if(0.6 to 0.8)
+							brain_result = SPAN_CLASS("scan_danger", "extremely weak")
+						if(0.9 to INFINITY)
+							brain_result = SPAN_CLASS("scan_danger", "fading")
 						else
-							brain_result = SPAN_CLASS("scan_danger","ERROR - Hardware fault")
+							brain_result = SPAN_CLASS("scan_danger", "ERROR - Hardware fault")
 				else
 					brain_result = SPAN_CLASS("scan_danger","ERROR - Organ not recognized")
 	else
@@ -117,7 +117,7 @@
 	// Pulse rate.
 	var/pulse_result = "normal"
 	var/obj/item/organ/internal/heart/heart = H.internal_organs_by_name[BP_HEART]
-	if(H.should_have_organ(BP_HEART) && !(heart.scp3349_induced))
+	if(H.should_have_organ(BP_HEART) && (heart.SCP?.designation != "3349-1"))
 		if(H.status_flags & FAKEDEATH)
 			pulse_result = 0
 		else
@@ -293,6 +293,27 @@
 
 	if(print_reagent_default_message)
 		. += "No results."
+
+	// Diseases
+	if(skill_level >= SKILL_BASIC)
+		var/list/visible_diseases = list()
+		for(var/datum/disease/D in H.diseases)
+			if(D.visibility_flags & HIDDEN_SCANNER)
+				continue
+			visible_diseases += D
+		if(LAZYLEN(visible_diseases))
+			. += "[b]Disease scan:[endb]"
+		for(var/datum/disease/D in visible_diseases)
+			. += "<span class='scan_warning'>[D.agent] detected.</span>"
+			. += "<span class='scan_warning'>[D.desc]</span>"
+			. += "<span class='scan_warning'>Stage: [D.stage]/[D.max_stages].</span>"
+			var/list/potential_cures = list()
+			for(var/cure in D.cures)
+				var/datum/reagent/R = cure
+				potential_cures |= initial(R.name)
+			if(LAZYLEN(potential_cures))
+				. += "<span class='scan_warning'>Cure: [english_list(potential_cures)].</span>"
+			. += "<br>"
 
 	header = jointext(header, null)
 	. = jointext(.,"<br>")

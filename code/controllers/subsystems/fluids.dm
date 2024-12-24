@@ -145,7 +145,7 @@ SUBSYSTEM_DEF(fluids)
 					F.flow_amount = flow_amount
 					setting_dir = get_dir(F, other)
 
-			F.set_dir(setting_dir)
+			F.setDir(setting_dir)
 
 			if(islist(F.equalizing_fluids) && F.equalizing_fluids.len > 1)
 				F.equalize_avg_depth = Floor(F.equalize_avg_depth/F.equalizing_fluids.len)
@@ -156,7 +156,7 @@ SUBSYSTEM_DEF(fluids)
 						SET_FLUID_DEPTH(other, F.equalize_avg_depth)
 						other.temperature = F.equalize_avg_temp
 			F.equalizing_fluids.Cut()
-			if(istype(F.loc, /turf/space))
+			if(isspaceturf(F.loc))
 				LOSE_FLUID(F, max((FLUID_EVAPORATION_POINT-1),F.fluid_amount * 0.5))
 
 		if (MC_TICK_CHECK)

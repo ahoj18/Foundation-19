@@ -8,13 +8,11 @@ Made by TheDarkElites
 #define AUDIBLE_RANGE_DECREASED  2
 #define AUDIBLE_RANGE_NONE       -1 //Prevent it from being heard even on the same tile
 
-//Maximium lum count before we no longer consider it dark. Should be a value between 0 and 1.
-var/dark_maximium = 0.05
-
 //View distance debuffs for sizes of objects/mobs passed through can_identify
-var/debuff_small = 1
-var/debuff_tiny = 2
-var/debuff_miniscule = 3
+
+#define DEBUFF_SMALL		1
+#define DEBUFF_TINY			2
+#define DEBUFF_MINISCULE	3
 
 // AUDIO MEMETICS
 
@@ -36,7 +34,7 @@ var/debuff_miniscule = 3
 				return 100
 			return TRUE
 
-	if(!isturf(origin.loc)) //Are we inside something that may decrease our audio range?
+	if(!isturf(origin) && !isturf(origin.loc)) //Are we inside something that may decrease our audio range?
 		if(hearable_range > AUDIBLE_RANGE_DECREASED)
 			hearable_range = AUDIBLE_RANGE_DECREASED
 
@@ -59,7 +57,7 @@ var/debuff_miniscule = 3
 			return FALSE
 
 /mob/living/carbon/human/proc/get_audio_insul() //gets total insulation from clothing/disabilities without any calculations.
-	if((sdisabilities & DEAFENED) || ear_deaf || incapacitated(INCAPACITATION_KNOCKOUT)) // cant hear if you're deaf.
+	if((sdisabilities & DEAFENED) || ear_deaf || incapacitated(INCAPACITATION_KNOCKOUT) || HAS_TRAIT(src, TRAIT_DEAF)) // cant hear if you're deaf.
 		return A_INSL_PERFECT
 	return audible_insulation
 
@@ -68,8 +66,6 @@ var/debuff_miniscule = 3
 /mob/living/carbon/human/can_see(atom/origin, visual_memetic = 0) //Checks if origin can be seen by a human. visiual_memetics should be one if you're checking for a visual memetic hazard as opposed to say someone looking at scp 173. If origin is null, checks for if the human can see in general.
 	var/turf/origin_turf
 	var/area/origin_area
-	if(eye_blind > 0) //this is different from blinded check as blinded is changed in the same way eye_blind is, meaning there can be a siutation where eye_blind is in effect but blinded is not set to true. Therefore, this check is neccesary as a pre-caution.
-		return FALSE
 	if(stat) //Unconscious humans cant see.
 		return FALSE
 	if(origin)
@@ -79,13 +75,15 @@ var/debuff_miniscule = 3
 			return FALSE
 		if(istype(origin.loc, /obj/item/storage)) //Cant see stuff in a backpack or hidden in a container
 			return FALSE
-		if(!(origin.get_holder_or_object() in dview(7, src))) //Cant see whats not in view. View dosent pick up stuff worn or held by mobs. Therefore, if origin is is held or worn by a mob it checks if we can see the mob instead.
+		if(!(origin.get_holder_or_object() in dview(9, src))) //Cant see whats not in view. View dosent pick up stuff worn or held by mobs. Therefore, if origin is is held or worn by a mob it checks if we can see the mob instead.
+			return FALSE
+		if(is_blind())
 			return FALSE
 
 		origin_turf = get_turf(origin)
 		origin_area = get_area(origin)
 
-		if((origin_turf.get_lumcount() <= dark_maximium) && (see_in_dark <= 2) && (see_invisible != SEE_INVISIBLE_NOLIGHTING) && (origin_area.dynamic_lighting != 0)) //Cant see whats in the dark (unless you have nightvision). Also regular view does check light level, but here we do it ourselves to allow flexibility for what we consider dark + integration with night vision goggles, etc.
+		if((is_dark(origin_turf)) && (see_in_dark <= 2) && (see_invisible != SEE_INVISIBLE_NOLIGHTING) && (origin_area.dynamic_lighting != 0)) //Cant see whats in the dark (unless you have nightvision). Also regular view does check light level, but here we do it ourselves to allow flexibility for what we consider dark + integration with night vision goggles, etc.
 			return FALSE
 		if(ismob(origin))
 			var/mob/origin_mob = origin
@@ -108,7 +106,7 @@ var/debuff_miniscule = 3
 	if(!(isobj(origin) || ismob(origin)))
 		return TRUE //if its not an object or mob it can always be identified/read (technically this should never happen but better safe than sorry)
 
-	var/viewdistance = 7 - get_how_nearsighted() //cant read if you're nearsighted and without prescription
+	var/viewdistance = is_nearsighted_currently() ? 2 : 7 //cant read if you're nearsighted
 	var/visual_insulation_calculated = get_visual_insul()
 	if(!visual_memetic) //If not memetic, we should still see objects even if wearing something with memetic insulation but no tint.
 		if((equipment_tint_total == TINT_NONE) && (visual_insulation_calculated != V_INSL_NONE))
@@ -121,15 +119,15 @@ var/debuff_miniscule = 3
 		var/obj/origin_Obj = origin
 		size_class = origin_Obj.w_class
 		switch(size_class)
-			if(ITEM_SIZE_SMALL) viewdistance -= debuff_small
-			if(ITEM_SIZE_TINY) viewdistance -= debuff_tiny
+			if(ITEM_SIZE_SMALL) viewdistance -= DEBUFF_SMALL
+			if(ITEM_SIZE_TINY) viewdistance -= DEBUFF_TINY
 	else if(ismob(origin))
 		var/mob/origin_Mob = origin
 		size_class = origin_Mob.mob_size
 		switch(size_class)
-			if(MOB_SMALL) viewdistance -= debuff_small
-			if(MOB_TINY) viewdistance -= debuff_tiny
-			if(MOB_MINISCULE) viewdistance -= debuff_miniscule
+			if(MOB_SMALL) viewdistance -= DEBUFF_SMALL
+			if(MOB_TINY) viewdistance -= DEBUFF_TINY
+			if(MOB_MINISCULE) viewdistance -= DEBUFF_MINISCULE
 
 	if(get_dist_euclidian(get_turf(src), get_turf(origin)) <= clamp(viewdistance, 0, 7))
 		if((visual_insulation_calculated == V_INSL_IMPERFECT) && visual_memetic)
@@ -139,20 +137,12 @@ var/debuff_miniscule = 3
 	return FALSE
 
 /mob/living/carbon/human/proc/get_visual_insul(include_tint = 1) //gets total insulation from clothing/disabilities without any calculations. Include_tint is for if you want to include tints in your insulation.
-	if((sdisabilities & BLINDED) || blinded || incapacitated(INCAPACITATION_KNOCKOUT)) // cant see if you're blind.
+	if((is_blind()) || incapacitated(INCAPACITATION_KNOCKOUT)) // cant see if you're blind.
 		return V_INSL_PERFECT
 	if(include_tint)
 		if(equipment_tint_total >= TINT_BLIND) //Checks tints. Tints are different from insulation in that they graphicaly obstruct your view, whereas insulation just insulates you from memetic hazards without obstructing your view.
 			return V_INSL_PERFECT
 	return visual_insulation
-
-/mob/living/carbon/human/proc/get_how_nearsighted() //Stolen from species.dm
-	var/prescriptions = 0
-	if(disabilities & NEARSIGHTED)
-		prescriptions += 7
-	if(equipment_prescription)
-		prescriptions -= equipment_prescription
-	return clamp(prescriptions,0,7)
 
 // BLINK MECHANICS
 
@@ -171,7 +161,7 @@ var/debuff_miniscule = 3
 		remove_verb(src, /mob/living/carbon/human/verb/manual_blink)
 
 /mob/living/carbon/human/proc/cause_blink() //This cant be handled in the eyes as eye processing and human life() processing are out of sync, causing weird bugs.
-	eye_blind += 2
+	set_temp_blindness_if_lower(2 SECONDS)
 	visible_message(SPAN_NOTICE("[src] blinks."), SPAN_NOTICE("You blink."))
 	to_chat(src, SPAN_NOTICE("You blink.")) //Cant use visible_message's self function as you're technically blind when blinking.
 	BITSET(hud_updateflag, BLINK_HUD)
@@ -179,6 +169,18 @@ var/debuff_miniscule = 3
 		blink_total = rand(8, 10)
 		blink_current = blink_total
 
+/mob/living/carbon/human/verb/manual_blink()
+	set name = "Blink"
+	set desc = "Your eyes will close for a moment, giving them some rest."
+	set category = "IC"
 
+	cause_blink()
+
+#undef AUDIBLE_RANGE_FULL
+#undef AUDIBLE_RANGE_DECREASED
+#undef AUDIBLE_RANGE_NONE
+#undef DEBUFF_SMALL
+#undef DEBUFF_TINY
+#undef DEBUFF_MINISCULE
 
 

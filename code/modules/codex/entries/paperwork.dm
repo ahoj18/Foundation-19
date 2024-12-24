@@ -1,6 +1,7 @@
 /datum/codex_entry/pen
 	associated_paths = list()
-	mechanics_text = {"Used for writing down your thoughts, on paper or elsewhere. The following special commands are available:<br><br>
+	associated_strings = list("Paperwork")
+	entry_text = {"Used for writing down your thoughts, on paper or elsewhere. The following special commands are available:<br><br>
 \[br\] : Creates a linebreak.<br>
 \[center\] - \[/center\] : Centers the text.<br>
 \[h1\] - \[/h1\] : Makes the text a first level heading.<br>
@@ -20,7 +21,8 @@
 \[row\] : New table row.<br>
 \[cell\] : New table cell.<br>
 \[hr\] : Adds a horizontal rule.<br>
-\[list\] - \[/list\] : A list. (Does not work with crayons)<br>
+\[ulist\] - \[/ulist\] : An unordered list. (Does not work with crayons)<br>
+\[olist\] - \[/olist\] : An ordered list. (Does not work with crayons)<br>
 \[*\] : A dot used for lists. (Does not work with crayons)<br>
 \[scplogo\] : Inserts the SCP Foundation logo.<br>
 \[ethicslogo\] : Inserts the Ethics Committee logo.<br>
@@ -39,12 +41,14 @@
 \[triblogo\] : Inserts the Internal Tribunal Department logo.<br>
 \[goclogo\] : Inserts the Global Occult Coalition logo.<br>
 \[uiulogo\] : Inserts the Unusual Incidents Unit logo.<br>
-\[thilogo\] : Inserts the Horizon Initiative logo.<br>
 \[mcdlogo\] : Inserts the Marshall, Carter and Dark logo.<br>
+\[grlogo\] : Inserts the Goldbaker-Reinz logo.<br>
 \[arlogo\] : Inserts the Anderson Robotics logo.<br>
 \[cilogo\] : Inserts the Chaos Insurgency logo.<br>
 \[shlogo\] : Inserts the Serpent's Hand logo.<br>
 \[cotbglogo\] : Inserts the Church of the Broken God logo.<br><br>
+\[acs item_number= clearance_level= containment_class= disruption_class= risk_class=\] : Creates an ACS bar without a secondary class. Put data after the equal signs of their respective entries (e.g. containment_class=keter)
+\[acs item_number= clearance_level= containment_class= secondary_class= disruption_class= risk_class=\] : Creates an ACS bar with a secondary class.
 <b>Digital exclusive commands (NanoWord, emails, reports, text files, etc):</b><br>
 \[pre\] - \[/pre\] : Adds preformatted text, forcing the text to be fixed width.<br>
 \[fontred\] - \[/font\] : Makes the text red.<br>
@@ -55,3 +59,7 @@
 /datum/codex_entry/pen/New()
 	associated_paths += typesof(/obj/item/pen)
 	. = ..()
+
+/datum/codex_entry/slide_projector
+	associated_paths = list(/obj/item/storage/slide_projector)
+	entry_text = "Use in hand to open the interface."

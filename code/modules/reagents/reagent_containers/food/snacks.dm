@@ -42,7 +42,7 @@
 /obj/item/reagent_containers/food/snacks/proc/On_Consume(mob/M)
 	if(!reagents.total_volume)
 		M.visible_message(SPAN_NOTICE("[M] finishes eating \the [src]."),SPAN_NOTICE("You finish eating \the [src]."))
-		M.drop_item()
+		M.drop_active_hand()
 		if(trash)
 			if(ispath(trash,/obj/item))
 				var/obj/item/TrashItem = new trash(get_turf(M))
@@ -78,7 +78,7 @@
 					to_chat(user, SPAN_WARNING("\The [blocked] is in the way!"))
 					return
 
-			user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)//puts a limit on how fast people can eat/drink things
+			user.setClickCooldown(CLICK_CD_ATTACK)//puts a limit on how fast people can eat/drink things
 			if (fullness <= 50)
 				to_chat(C, SPAN_DANGER("You hungrily chew out a piece of [src] and gobble it!"))
 			if (fullness > 50 && fullness <= 150)
@@ -100,7 +100,8 @@
 				user.visible_message(SPAN_DANGER("[user] cannot force anymore of [src] down [M]'s throat."))
 				return 0
 
-			user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
+			user.setClickCooldown(CLICK_CD_ATTACK)
+
 			if(!do_after(user, 4 SECONDS, M, bonus_percentage = 25)) return
 
 			if (user.get_active_hand() != src)
@@ -234,6 +235,67 @@
 			qdel(src)
 	On_Consume(user)
 
+GLOBAL_LIST_EMPTY(mobs_by_meat)
+
+// 1:1 - Returns random snack of somewhat similar "level". Enjoy!
+// Fine - Multiplies the amount of reagents in the food and bite size; Also makes sprite bigger
+// Very fine - Tries to spawn a random mob that has this snack as its meat type. If all else fails - duplicates itself ad infinitum.
+/obj/item/reagent_containers/food/snacks/Conversion914(mode = MODE_ONE_TO_ONE, mob/user = usr)
+	switch(mode)
+		if(MODE_ONE_TO_ONE)
+			var/potential_return = list()
+			for(var/item_type in subtypesof(/obj/item/reagent_containers/food/snacks))
+				var/obj/item/reagent_containers/food/snacks/S = item_type
+				if(initial(S.bitesize) > bitesize * 3 || initial(S.bitesize) < bitesize * 0.3)
+					continue
+				if(initial(S.w_class) > w_class + 1 || initial(S.w_class) < w_class - 1)
+					continue
+				potential_return += item_type
+			if(!LAZYLEN(potential_return))
+				return src
+			return pick(potential_return)
+		if(MODE_FINE)
+			// Gluttony is a sin.
+			if(volume > initial(volume) * 5 && prob(volume * 0.02))
+				explosion(get_turf(src), -1, 1, 2, 3)
+				return null
+			// Bigger sprite!
+			var/matrix/M = matrix()
+			transform = M.Scale(1.2)
+			// Bigger food!
+			volume = round(volume * 2)
+			bitesize = round(bitesize * 2)
+			// Duplicate initial reagents
+			for(var/reagent in food_reagents)
+				reagents.add_reagent(reagent, food_reagents[reagent])
+			reagents.remove_reagent(/datum/reagent/nutriment, nutriment_amt)
+			return src
+		if(MODE_VERY_FINE)
+			if(!LAZYLEN(GLOB.mobs_by_meat))
+				for(var/mob_type in subtypesof(/mob/living))
+					var/mob/living/L = mob_type
+					// Humans don't have meat normally, it is initialized by species
+					if(ispath(mob_type, /mob/living/carbon/human))
+						for(var/specie_type in subtypesof(/datum/species))
+							var/datum/species/S = specie_type
+							if(!(initial(S.meat_type) in GLOB.mobs_by_meat))
+								GLOB.mobs_by_meat[initial(S.meat_type)] = list()
+							GLOB.mobs_by_meat[initial(S.meat_type)] |= specie_type
+						continue
+					if(!(initial(L.meat_type) in GLOB.mobs_by_meat))
+						GLOB.mobs_by_meat[initial(L.meat_type)] = list()
+					GLOB.mobs_by_meat[initial(L.meat_type)] |= mob_type
+			if(!(type in GLOB.mobs_by_meat))
+				// Duplicate!
+				new type(get_turf(src))
+				return src
+			var/mob_or_type = pick(GLOB.mobs_by_meat[type])
+			if(ispath(mob_or_type, /datum/species))
+				var/datum/species/S = mob_or_type
+				mob_or_type = new /mob/living/carbon/human(get_turf(src), initial(S.name))
+			return mob_or_type
+	return ..()
+
 //////////////////////////////////////////////////
 ////////////////////////////////////////////Snacks
 //////////////////////////////////////////////////
@@ -346,7 +408,7 @@
 		return
 	has_been_heated = 1
 	user.visible_message(SPAN_NOTICE("[user] crushes \the [src] package."), "You crush \the [src] package and feel a comfortable heat build up.")
-	addtimer(CALLBACK(src, .proc/heat, weakref(user)), 20 SECONDS)
+	addtimer(CALLBACK(src, PROC_REF(heat), weakref(user)), 20 SECONDS)
 
 /obj/item/reagent_containers/food/snacks/donkpocket/sinpocket/heat(weakref/message_to)
 	..()
@@ -381,7 +443,7 @@
 		reagents.add_reagent(reagent, heated_reagents[reagent])
 	bitesize = 6
 	SetName("warm " + name)
-	addtimer(CALLBACK(src, .proc/cool), 7 MINUTES)
+	addtimer(CALLBACK(src, PROC_REF(cool)), 7 MINUTES)
 
 /obj/item/reagent_containers/food/snacks/donkpocket/proc/cool()
 	if(!warm)

@@ -60,7 +60,7 @@
 		return 0
 
 	//space check ~no flying space trains sorry
-	if(on && istype(destination, /turf/space))
+	if(on && isspaceturf(destination))
 		return 0
 
 	return ..()
@@ -108,9 +108,13 @@
 
 /obj/vehicle/train/cargo/engine/Bump(atom/Obstacle)
 	var/obj/machinery/door/D = Obstacle
+	var/obj/structure/stairs/S = Obstacle
 	var/mob/living/carbon/human/H = load
 	if(istype(D) && istype(H))
 		D.Bumped(H)		//a little hacky, but hey, it works, and respects access rights
+	if(istype(S))
+		S.Bumped(src)
+		H.forceMove(loc)
 
 	..()
 
@@ -151,7 +155,7 @@
 /obj/vehicle/train/cargo/RunOver(mob/living/carbon/human/H)
 	var/list/parts = list(BP_HEAD, BP_CHEST, BP_L_LEG, BP_R_LEG, BP_L_ARM, BP_R_ARM)
 
-	H.apply_effects(5, 5)
+	H.apply_effects(stun = 5, weaken = 5)
 	for(var/i = 0, i < rand(1,5), i++)
 		var/def_zone = pick(parts)
 		H.apply_damage(rand(5,10), BRUTE, def_zone)

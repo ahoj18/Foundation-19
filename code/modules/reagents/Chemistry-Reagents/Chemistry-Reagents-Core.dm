@@ -1,6 +1,8 @@
 /datum/reagent/blood
 	data = new/list(
 		"donor" = null,
+		"viruses" = null,
+		"resistances" = null,
 		"species" = SPECIES_HUMAN,
 		"blood_DNA" = null,
 		"blood_type" = null,
@@ -28,7 +30,7 @@
 
 	heating_products = list(/datum/reagent/coagulated_blood)
 	heating_prod_english = "<span codexlink='coagulated blood (chemical)'>coagulated blood</span>"
-	heating_point = 318
+	heating_point = 51 CELSIUS
 	heating_message = "coagulates and clumps together."
 
 /datum/reagent/blood/initialize_data(newdata)
@@ -61,21 +63,73 @@
 			B.blood_DNA["UNKNOWN DNA STRUCTURE"] = "X*"
 
 /datum/reagent/blood/affect_ingest(mob/living/carbon/M, alien, removed)
-
 	if(M.chem_doses[type] > 5)
 		M.adjustToxLoss(removed)
 	if(M.chem_doses[type] > 15)
 		M.adjustToxLoss(removed)
 
+	if(data && data["viruses"])
+		for(var/thing in data["viruses"])
+			var/datum/disease/strain = thing
+
+			if((strain.spread_flags & DISEASE_SPREAD_SPECIAL) || (strain.spread_flags & DISEASE_SPREAD_NON_CONTAGIOUS))
+				continue
+
+			if(strain.spread_flags & DISEASE_SPREAD_CONTACT_FLUIDS)
+				M.ContactContractDisease(strain)
+
 /datum/reagent/blood/affect_touch(mob/living/carbon/M, alien, removed)
-	if(ishuman(M))
-		var/mob/living/carbon/human/H = M
-		if(H.isSynthetic())
-			return
+	if(data && data["viruses"])
+		for(var/thing in data["viruses"])
+			var/datum/disease/strain = thing
+
+			if((strain.spread_flags & DISEASE_SPREAD_SPECIAL) || (strain.spread_flags & DISEASE_SPREAD_NON_CONTAGIOUS))
+				continue
+
+			if(strain.spread_flags & DISEASE_SPREAD_CONTACT_FLUIDS)
+				M.ContactContractDisease(strain)
 
 /datum/reagent/blood/affect_blood(mob/living/carbon/M, alien, removed)
 	M.inject_blood(src, volume)
 	remove_self(volume)
+	if(data && data["viruses"])
+		for(var/thing in data["viruses"])
+			var/datum/disease/strain = thing
+
+			if((strain.spread_flags & DISEASE_SPREAD_SPECIAL) || (strain.spread_flags & DISEASE_SPREAD_NON_CONTAGIOUS))
+				continue
+
+			M.ForceContractDisease(strain)
+
+/datum/reagent/blood/mix_data(mix_data, new_amount)
+	if(data && mix_data)
+		if(data["viruses"] || mix_data["viruses"])
+
+			var/list/mix1 = data["viruses"]
+			var/list/mix2 = mix_data["viruses"]
+
+			// Stop issues with the list changing during mixing.
+			var/list/to_mix = list()
+
+			for(var/datum/disease/advance/AD in mix1)
+				to_mix += AD
+			for(var/datum/disease/advance/AD in mix2)
+				to_mix += AD
+
+			var/datum/disease/advance/AD = AdvanceMix(to_mix)
+			if(AD)
+				var/list/preserve = list(AD)
+				for(var/D in data["viruses"])
+					if(!istype(D, /datum/disease/advance))
+						preserve += D
+				data["viruses"] = preserve
+
+/datum/reagent/blood/proc/GetDiseases()
+	. = list()
+	if(data && data["viruses"])
+		for(var/thing in data["viruses"])
+			var/datum/disease/D = thing
+			. += D
 
 // Water!
 #define WATER_LATENT_HEAT 9500 // How much heat is removed when applied to a hot turf, in J/unit (9500 makes 120 u of water roughly equivalent to 2L
@@ -122,8 +176,8 @@
 	var/datum/gas_mixture/environment = T.return_air()
 	var/min_temperature = T20C + rand(0, 20) // Room temperature + some variance. An actual diminishing return would be better, but this is *like* that. In a way. . This has the potential for weird behavior, but I says fuck it. Water grenades for everyone.
 
-	var/hotspot = (locate(/obj/fire) in T)
-	if(hotspot && !istype(T, /turf/space))
+	var/hotspot = (locate(/obj/hotspot) in T)
+	if(hotspot && !isspaceturf(T))
 		var/datum/gas_mixture/lowertemp = T.remove_air(T:air:total_moles)
 		lowertemp.temperature = max(min(lowertemp.temperature-2000, lowertemp.temperature / 2), 0)
 		lowertemp.react()
@@ -145,6 +199,11 @@
 		var/obj/item/reagent_containers/food/snacks/monkeycube/cube = O
 		if(!cube.wrapped)
 			cube.Expand()
+	if(istype(O, /obj/effect/turf_fire))
+		var/obj/effect/turf_fire/TF = O
+		TF.AddPower(-volume)
+		if(TF.fire_power <= 0)
+			qdel(TF)
 
 /datum/reagent/water/touch_mob(mob/living/L, amount)
 	var/mob/living/carbon/human/H = L
@@ -155,9 +214,9 @@
 			if (!istype(C) || !(C.body_parts_covered & FACE))
 				S.extinguish()
 
-	if(istype(L, /mob/living/scp_457))
+	if(istype(L, /mob/living/simple_animal/hostile/scp457))
 		L.adjustBruteLoss(amount * 2)
-		to_chat(L,	SPAN_USERDANGER("FUEL LESSENS, MAKE THEM PAY..."))
+		L.visible_message(SPAN_DANGER("The [L]'s flame sizzles and flickers where the water touches it"), SPAN_DANGER("You are weakend by the water!"))
 		remove_self(amount)
 
 	if(istype(L))
@@ -182,7 +241,7 @@
 			S.Feedstop()
 	if(M.chem_doses[type] == removed)
 		M.visible_message(SPAN_WARNING("[S]'s flesh sizzles where the water touches it!"), SPAN_DANGER("Your flesh burns in the water!"))
-		M.confused = max(M.confused, 2)
+		M.set_confusion_if_lower(2 SECONDS)
 
 /datum/reagent/water/boiling
 	name = "Boiling water"
@@ -225,6 +284,7 @@
 	glass_name = "welder fuel"
 	glass_desc = "Unless you are an industrial tool, this is probably not safe for consumption."
 	value = 6.8
+	accelerant_quality = 10
 
 /datum/reagent/fuel/touch_turf(turf/T)
 	new /obj/effect/decal/cleanable/liquid_fuel(T, volume)

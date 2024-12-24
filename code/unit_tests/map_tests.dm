@@ -28,11 +28,11 @@
 		var/bad_msg = "--------------- [A.name]([A.type])"
 
 		var/exemptions = get_exemptions(A)
-		if(!A.apc && !(exemptions & GLOB.using_map.NO_APC))
+		if(!A.apc && !(exemptions & NO_APC))
 			var/turf/T = pick_area_turf(A)
 			log_bad("[bad_msg] lacks an APC. Area Z: [A.z] Random area turf: [T.x],[T.y],[T.z].")
 			area_good = 0
-		else if(A.apc && (exemptions & GLOB.using_map.NO_APC))
+		else if(A.apc && (exemptions & NO_APC))
 			log_bad("[bad_msg] is not supposed to have an APC. APC location: [A.apc.x], [A.apc.y], [A.apc.z].")
 			area_good = 0
 
@@ -255,6 +255,8 @@
 /datum/unit_test/ladder_check/start_test()
 	var/succeeded = TRUE
 	for(var/obj/structure/ladder/L)
+		if(is_type_in_list(L, GLOB.using_map.ladder_check_exempt_ladders))
+			continue
 		if(L.allowed_directions & UP)
 			succeeded = check_direction(L, GetAbove(L), UP, DOWN) && succeeded
 		if(L.allowed_directions & DOWN)

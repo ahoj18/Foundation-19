@@ -601,7 +601,7 @@ var/list/intents = list(I_HELP,I_DISARM,I_GRAB,I_HURT)
 	if(client)
 		client.images -= image
 
-/mob/proc/flash_eyes(intensity = FLASH_PROTECTION_MODERATE, override_blindness_check = FALSE, affect_silicon = FALSE, visual = FALSE, type = /obj/screen/fullscreen/flash)
+/mob/proc/flash_eyes(intensity = FLASH_PROTECTION_MODERATE, override_blindness_check = FALSE, affect_silicon = FALSE, visual = FALSE, type = /atom/movable/screen/fullscreen/flash)
 	for(var/mob/M in contents)
 		M.flash_eyes(intensity, override_blindness_check, affect_silicon, visual, type)
 
@@ -617,26 +617,6 @@ var/list/intents = list(I_HELP,I_DISARM,I_GRAB,I_HURT)
 
 /mob/proc/ssd_check()
 	return !client && !teleop
-
-/mob/proc/jittery_damage()
-	return //Only for living/carbon/human/
-
-/mob/living/carbon/human/jittery_damage()
-	var/obj/item/organ/internal/heart/L = internal_organs_by_name[BP_HEART]
-	if(!istype(L))
-		return 0
-	if(BP_IS_ROBOTIC(L))
-		return 0//Robotic hearts don't get jittery.
-	if(src.jitteriness >= 400 && prob(5)) //Kills people if they have high jitters.
-		if(prob(1))
-			L.take_internal_damage(L.max_damage / 2, 0)
-			to_chat(src, SPAN_DANGER("Something explodes in your heart."))
-			admin_victim_log(src, "has taken <b>lethal heart damage</b> at jitteriness level [src.jitteriness].")
-		else
-			L.take_internal_damage(1, 0)
-			to_chat(src, SPAN_DANGER("The jitters are killing you! You feel your heart beating out of your chest."))
-			admin_victim_log(src, "has taken <i>minor heart damage</i> at jitteriness level [src.jitteriness].")
-	return 1
 
 /mob/proc/try_teleport(area/thearea)
 	if(!istype(thearea))
@@ -708,14 +688,39 @@ var/list/intents = list(I_HELP,I_DISARM,I_GRAB,I_HURT)
 /mob/proc/unset_sdisability(sdisability)
 	sdisabilities &= ~sdisability
 
+/// This is necesarry due to how invisibility is handled
+/// This is a list for defining the item which will set the see_invisible
+/// The higher the number the higher its priority , if multiple items of the same priority exist
+/// It will use the max of them
+#define VISION_PRIORITY_LIST list(/mob/living/exosuit = 100, /atom = 99)
+
 /mob/proc/get_accumulated_vision_handlers()
 	var/result[2]
 	var/asight = 0
 	var/ainvis = 0
+	var/max_prio = 0
+	var/list/equal_priority = list()
 	for(var/atom/vision_handler in additional_vision_handlers)
 		//Grab their flags
+
 		asight |= vision_handler.additional_sight_flags()
-		ainvis = max(ainvis, vision_handler.additional_see_invisible())
+		for(var/atom_type in VISION_PRIORITY_LIST)
+			if(istype(vision_handler, atom_type))
+				if(VISION_PRIORITY_LIST[atom_type] > max_prio)
+					max_prio = VISION_PRIORITY_LIST[atom_type]
+					equal_priority.Cut()
+					equal_priority.Add(vision_handler)
+				else if(VISION_PRIORITY_LIST[atom_type] == max_prio)
+					equal_priority.Add(vision_handler)
+
+	if(length(equal_priority) == 1)
+		var/atom/cast = equal_priority[1]
+		/// Doing : with the first item of the list just calls atom/see_invisible instead of the type's proc override...
+		ainvis = cast.additional_see_invisible()
+	else if(length(equal_priority != 0))
+		for(var/atom/visual_thing in equal_priority)
+			ainvis = max(visual_thing.additional_see_invisible(), ainvis)
+
 	result[1] = asight
 	result[2] = ainvis
 

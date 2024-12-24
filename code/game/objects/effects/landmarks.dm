@@ -62,7 +62,7 @@
 			endgame_exits += loc
 			delete_me = 1
 		if ("scp106")
-			new /mob/living/carbon/human/scp_106 (loc)
+			new /mob/living/carbon/human/scp106 (loc)
 			delete_me = 1
 			return
 		if ("scp049")
@@ -70,32 +70,39 @@
 			delete_me = 1
 			return
 		if ("scp457")
-			new /mob/living/scp_457 (loc)
+			new /mob/living/simple_animal/hostile/scp457 (loc)
 			delete_me = 1
 			return
 		if ("scp527")
-			new /mob/living/carbon/human/scp_527 (loc)
+			new /mob/living/carbon/human/scp527 (loc)
+			delete_me = 1
+		if ("scp347")
+			new /mob/living/carbon/human/scp347 (loc)
+			delete_me = 1
+			return
+		if ("scp2020")
+			new /mob/living/carbon/human/scp2020 (loc)
 			delete_me = 1
 			return
 		if ("scp173")
-			new /mob/living/scp_173 (loc)
+			new /mob/living/scp173 (loc)
 			delete_me = 1
 			return
 		if ("scp2343")
-			new /mob/living/carbon/human/scp2343 (loc)
+			new /mob/living/carbon/human/scp343/scp2343 (loc)
 			delete_me = 1
 			return
 		if ("scp999")
-			new /mob/living/simple_animal/scp_999 (loc)
+			new /mob/living/scp999 (loc)
 			delete_me = 1
 			return
 		if ("scp343")
 			new /mob/living/carbon/human/scp343 (loc)
 			delete_me = 1
 			return
-		if("scp420j")
-			GLOB.possible_420j += loc
-			delete_me = 1
+		if ("scp082")
+			new /mob/living/carbon/human/scp082 (loc)
+			delete_me = TRUE
 			return
 		if("JoinLateDclass")
 			GLOB.latejoin_dclass += loc
@@ -103,10 +110,6 @@
 			return
 		if("JoinLateComms")
 			GLOB.latejoin_comms += loc
-			delete_me = 1
-			return
-		if("JoinLatelcz")
-			GLOB.latejoin_lcz += loc
 			delete_me = 1
 			return
 		if("NewPlayer")

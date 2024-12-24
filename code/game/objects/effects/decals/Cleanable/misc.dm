@@ -21,7 +21,7 @@
 
 /obj/effect/decal/cleanable/greenglow/Initialize()
 	. = ..()
-	addtimer(CALLBACK(src, /datum/proc/qdel_self), 2 MINUTES)
+	addtimer(CALLBACK(src, TYPE_PROC_REF(/datum, qdel_self)), 2 MINUTES)
 
 /obj/effect/decal/cleanable/dirt
 	name = "dirt"
@@ -86,7 +86,7 @@
 	random_icon_states = icon_states(icon)
 	..()
 	atom_flags |= ATOM_FLAG_OPEN_CONTAINER
-	create_reagents(30, src)
+	create_reagents(100, src)
 	if(prob(75))
 		var/matrix/M = matrix()
 		M.Turn(pick(90, 180, 270))

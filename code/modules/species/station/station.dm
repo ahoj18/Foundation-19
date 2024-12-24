@@ -3,11 +3,9 @@
 	name_plural = "Humans"
 	primitive_form = "Monkey"
 	unarmed_types = list(/datum/unarmed_attack/stomp, /datum/unarmed_attack/kick, /datum/unarmed_attack/punch, /datum/unarmed_attack/bite)
-	description = "Humanity originated in the Sol system, and over the last five centuries has spread \
-	colonies across a wide swathe of space. They hold a wide range of forms and creeds.<br/><br/> \
-	While the central Sol government maintains control of its far-flung people, powerful corporate \
-	interests, rampant cyber and bio-augmentation and secretive factions make life on most human \
-	worlds tumultous at best."
+	description = "Humanity holds a wide range of forms and creeds.	While the \
+	SCP Foundation maintains control from the dark, powerful corporate interests \
+	and other secretive factions make life tumultous at best."
 	assisted_langs = list(LANGUAGE_NABBER)
 	min_age = 18
 	max_age = 100
@@ -311,7 +309,7 @@
 
 	body_temperature = T0C + 15		//make the plant people have a bit lower body temperature, why not
 
-	species_flags = SPECIES_FLAG_NO_SCAN | SPECIES_FLAG_IS_PLANT | SPECIES_FLAG_NO_PAIN | SPECIES_FLAG_NO_SLIP
+	species_flags = SPECIES_FLAG_NO_SCAN | SPECIES_FLAG_IS_PLANT | SPECIES_FLAG_NO_PAIN | SPECIES_FLAG_NO_SLIP | SPECIES_FLAG_NO_DISEASE
 	appearance_flags = 0
 	spawn_flags = SPECIES_CAN_JOIN | SPECIES_IS_WHITELISTED | SPECIES_NO_FBP_CONSTRUCTION | SPECIES_NO_FBP_CHARGEN
 
@@ -334,7 +332,7 @@
 	var/mob/living/carbon/alien/diona/nymph = new (target)
 	var/datum/ghosttrap/trap = get_ghost_trap("living plant")
 	trap.request_player(nymph, "A diona nymph has split from its gestalt.", 30 SECONDS)
-	addtimer(CALLBACK(nymph, /mob/living/carbon/alien/diona/proc/check_spawn_death), 30 SECONDS)
+	addtimer(CALLBACK(nymph, TYPE_PROC_REF(/mob/living/carbon/alien/diona, check_spawn_death)), 30 SECONDS)
 
 /mob/living/carbon/alien/diona/proc/check_spawn_death()
 	if (QDELETED(src))
@@ -377,7 +375,7 @@
 /datum/species/diona/handle_post_spawn(mob/living/carbon/human/H)
 	H.gender = NEUTER
 	. = ..()
-	addtimer(CALLBACK(src, .proc/fill_with_nymphs, H), 0)
+	addtimer(CALLBACK(src, PROC_REF(fill_with_nymphs), H), 0)
 
 /datum/species/diona/proc/fill_with_nymphs(mob/living/carbon/human/H)
 

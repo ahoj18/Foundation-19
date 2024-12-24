@@ -1,8 +1,4 @@
 /datum/map
-	var/const/NO_APC = 1
-	var/const/NO_VENT = 2
-	var/const/NO_SCRUBBER = 4
-
 	// Unit test vars
 	var/list/apc_test_exempt_areas = list(
 		/area/space = NO_SCRUBBER|NO_VENT|NO_APC,
@@ -57,5 +53,9 @@
 	)
 
 	var/list/area_purity_test_exempt_areas = list()
+
+	var/list/ladder_check_exempt_ladders = list(
+		/obj/structure/ladder/scp1102ladder
+	)
 
 /area/ship

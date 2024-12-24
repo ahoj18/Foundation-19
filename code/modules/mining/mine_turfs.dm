@@ -23,6 +23,10 @@ var/list/mining_floors = list()
 /turf/unsimulated/mineral/get_roof_turf()
 	return /turf/simulated/floor/asteroid
 
+/turf/unsimulated/mineral/animated
+	icon_state = "rock-dark-animated"
+
+
 /turf/simulated/mineral
 	name = "rock"
 	icon = 'icons/turf/walls.dmi'
@@ -90,7 +94,7 @@ var/list/mining_floors = list()
 		if(update_neighbors && istype(turf_to_check,/turf/simulated/floor/asteroid))
 			var/turf/simulated/floor/asteroid/T = turf_to_check
 			T.updateMineralOverlays()
-		else if(istype(turf_to_check,/turf/space) || istype(turf_to_check,/turf/simulated/floor))
+		else if(isspaceturf(turf_to_check) || istype(turf_to_check,/turf/simulated/floor))
 			var/image/rock_side = image(icon, "rock_side", dir = turn(direction, 180))
 			rock_side.turf_decal_layerise()
 			switch(direction)
@@ -172,7 +176,7 @@ var/list/mining_floors = list()
 
 //Not even going to touch this pile of spaghetti
 /turf/simulated/mineral/attackby(obj/item/W as obj, mob/user as mob)
-	if (!user.IsAdvancedToolUser())
+	if (!ISADVANCEDTOOLUSER(user))
 		to_chat(usr, SPAN_WARNING("You don't have the dexterity to do this!"))
 		return
 

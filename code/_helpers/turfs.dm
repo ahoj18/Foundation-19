@@ -44,18 +44,26 @@
 	if(turfs.len)
 		return pick(turfs)
 
-/proc/screen_loc2turf(text, turf/origin)
-	if(!origin)
+///Returns a turf based on text inputs, original turf and viewing client
+/proc/parse_caught_click_modifiers(list/modifiers, turf/origin, client/viewing_client)
+	if(!modifiers)
 		return null
-	var/tZ = splittext(text, ",")
-	var/tX = splittext(tZ[1], "-")
-	var/tY = text2num(tX[2])
-	tX = splittext(tZ[2], "-")
-	tX = text2num(tX[2])
-	tZ = origin.z
-	tX = max(1, min(origin.x + 7 - tX, world.maxx))
-	tY = max(1, min(origin.y + 7 - tY, world.maxy))
-	return locate(tX, tY, tZ)
+
+	var/screen_loc = splittext(LAZYACCESS(modifiers, SCREEN_LOC), ",")
+	var/list/actual_view = getviewsize(viewing_client ? viewing_client.view : world.view)
+	var/click_turf_x = splittext(screen_loc[1], ":")
+	var/click_turf_y = splittext(screen_loc[2], ":")
+	var/click_turf_z = origin.z
+
+	var/click_turf_px = text2num(click_turf_x[2])
+	var/click_turf_py = text2num(click_turf_y[2])
+	click_turf_x = origin.x + text2num(click_turf_x[1]) - round(actual_view[1] / 2) - 1
+	click_turf_y = origin.y + text2num(click_turf_y[1]) - round(actual_view[2] / 2) - 1
+
+	var/turf/click_turf = locate(clamp(click_turf_x, 1, world.maxx), clamp(click_turf_y, 1, world.maxy), click_turf_z)
+	LAZYSET(modifiers, ICON_X, "[(click_turf_px - click_turf.pixel_x) + ((click_turf_x - click_turf.x) * world.icon_size)]")
+	LAZYSET(modifiers, ICON_Y, "[(click_turf_py - click_turf.pixel_y) + ((click_turf_y - click_turf.y) * world.icon_size)]")
+	return click_turf
 
 /*
 	Z-level Helpers
@@ -91,10 +99,10 @@
 */
 
 /proc/is_space_turf(turf/T)
-	return istype(T, /turf/space)
+	return isspaceturf(T)
 
 /proc/is_not_space_turf(turf/T)
-	return !is_space_turf(T)
+	return !isspaceturf(T)
 
 /proc/is_open_space(turf/T)
 	return isopenspace(T)
@@ -124,7 +132,7 @@
 	if (!T)
 		return "The spawn location doesn't seem to exist. Please contact an admin via adminhelp if this error persists."
 
-	if(istype(T, /turf/space)) // Space tiles
+	if(isspaceturf(T)) // Space tiles
 		return "Spawn location is open to space."
 	var/datum/gas_mixture/air = T.return_air()
 	if(!air)
@@ -138,6 +146,11 @@
 	var/datum/gas_mixture/environment = T ? T.return_air() : null
 	var/pressure =  environment ? environment.return_pressure() : 0
 	if(pressure < SOUND_MINIMUM_PRESSURE)
+		return TRUE
+	return FALSE
+
+/proc/is_dark(turf/T, darkness_threshold = 0.03)
+	if(T.get_lumcount() <= darkness_threshold)
 		return TRUE
 	return FALSE
 

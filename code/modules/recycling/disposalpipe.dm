@@ -69,7 +69,7 @@
 	//
 /obj/structure/disposalpipe/proc/transfer(obj/structure/disposalholder/H)
 	var/nextdir = nextdir(H.dir)
-	H.set_dir(nextdir)
+	H.setDir(nextdir)
 	var/turf/T = H.nextloc()
 	var/obj/structure/disposalpipe/P = H.findpipe(T)
 
@@ -90,7 +90,7 @@
 	// update the icon_state to reflect hidden status
 /obj/structure/disposalpipe/proc/update()
 	var/turf/T = src.loc
-	hide(!T.is_plating() && !istype(T,/turf/space))	// space never hides pipes
+	hide(!T.is_plating() && !isspaceturf(T))	// space never hides pipes
 
 	// hide called by levelupdate if turf intact status changes
 	// change visibility status and force update of icon
@@ -125,7 +125,7 @@
 
 	var/turf/target
 	if(direction)		// direction is specified
-		if(istype(T, /turf/space)) // if ended in space, then range is unlimited
+		if(isspaceturf(T)) // if ended in space, then range is unlimited
 			target = get_edge_target_turf(T, direction)
 		else						// otherwise limit to 10 tiles
 			target = get_ranged_target_turf(T, direction, 10)
@@ -175,7 +175,7 @@
 		for(var/D in GLOB.cardinal)
 			if(D & dpdir)
 				var/obj/structure/disposalpipe/broken/P = new(src.loc)
-				P.set_dir(D)
+				P.setDir(D)
 
 	src.set_invisibility(101)	// make invisible (since we won't delete the pipe immediately)
 	var/obj/structure/disposalholder/H = locate() in src
@@ -324,7 +324,7 @@
 
 /obj/structure/disposalpipe/up/transfer(obj/structure/disposalholder/H)
 	var/nextdir = nextdir(H.dir)
-	H.set_dir(nextdir)
+	H.setDir(nextdir)
 
 	var/turf/T
 	var/obj/structure/disposalpipe/P
@@ -586,7 +586,7 @@
 
 /obj/structure/disposalpipe/diversion_junction/transfer(obj/structure/disposalholder/H)
 	var/nextdir = nextdir(H.dir, H.destinationTag)
-	H.set_dir(nextdir)
+	H.setDir(nextdir)
 	var/turf/T = H.nextloc()
 	var/obj/structure/disposalpipe/P = H.findpipe(T)
 
@@ -690,7 +690,7 @@
 
 /obj/structure/disposalpipe/sortjunction/transfer(obj/structure/disposalholder/H)
 	var/nextdir = nextdir(H.dir, H.destinationTag)
-	H.set_dir(nextdir)
+	H.setDir(nextdir)
 	var/turf/T = H.nextloc()
 	var/obj/structure/disposalpipe/P = H.findpipe(T)
 

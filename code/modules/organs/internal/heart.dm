@@ -13,8 +13,6 @@
 	max_damage = 45
 	var/open
 	var/list/external_pump
-	scp106_vulnerable = FALSE
-	var/scp3349_induced = FALSE		// whether or not you're currently undergoing the effects of 3349
 
 /obj/item/organ/internal/heart/open
 	open = 1
@@ -102,14 +100,14 @@
 			pulse++
 
 	// So does SCP-3349
-	if(pulse != PULSE_NORM && scp3349_induced)
+	if(pulse != PULSE_NORM && ((SCP ? SCP.designation : "") == "3349-1"))
 		if(pulse > PULSE_NORM)
 			pulse--
 		else
 			pulse++
 
 /obj/item/organ/internal/heart/proc/handle_heartbeat()
-	if(pulse >= PULSE_2FAST || owner.shock_stage >= 10 || is_below_sound_pressure(get_turf(owner)))
+	if(pulse >= PULSE_2FAST || owner.shock_stage >= 10 || HAS_TRAIT(owner, TRAIT_HEAR_HEARTBEAT) || is_below_sound_pressure(get_turf(owner)))
 		//PULSE_THREADY - maximum value for pulse, currently it 5.
 		//High pulse value corresponds to a fast rate of heartbeat.
 		//Divided by 2, otherwise it is too slow.
@@ -117,9 +115,9 @@
 		if(owner.chem_effects[CE_PULSE] > 2)
 			heartbeat++
 
-		if(heartbeat >= (scp3349_induced ? (rate * 2) : rate))	// scp3349 heartbeat is long so we play it half as often to prevent overlap
+		if(heartbeat >= (((SCP ? SCP.designation : "") == "3349-1") ? (rate * 2) : rate))	// scp3349 heartbeat is long so we play it half as often to prevent overlap
 			heartbeat = 0
-			sound_to(owner, sound((scp3349_induced ? 'sounds/effects/heartbeatpurr.ogg' : beat_sound),0,0,0,50))
+			sound_to(owner, sound((((SCP ? SCP.designation : "") == "3349-1") ? 'sounds/effects/heartbeatpurr.ogg' : beat_sound),0,0,0,50))
 		else
 			heartbeat++
 
@@ -188,7 +186,7 @@
 				FONT_HUGE(SPAN_DANGER("Blood sprays out from your [spray_organ]!"))
 			)
 			owner.Stun(1)
-			owner.eye_blurry = 2
+			owner.set_eye_blur_if_lower(3 SECONDS)
 
 			//AB occurs every heartbeat, this only throttles the visible effect
 			next_blood_squirt = world.time + 80
@@ -235,7 +233,7 @@
 		if(PULSE_THREADY)
 			. += "extremely fast and faint "
 
-	if(scp3349_induced)
+	if(SCP?.designation == "3349-1")
 		. += "cat purr"
 	else
 		. += "pulse"

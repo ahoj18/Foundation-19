@@ -42,7 +42,7 @@
 	display_name = "integrated security HUD (head)"
 	cost = 4
 	path = /obj/item/organ/internal/augment/active/hud/security
-	allowed_branches = list(/datum/mil_branch/security)
+	whitelist_department_flags = SEC
 
 /datum/gear/augment/integrated_janitor_hud
 	display_name = "integrated filth HUD (head)"
@@ -53,3 +53,9 @@
 	display_name = "integrated sciHUD (head)"
 	cost = 4
 	path = /obj/item/organ/internal/augment/active/hud/science
+
+/datum/gear/augment/memory_inhibitor
+	display_name = "class H amnestic implant (head)"
+	description = "An implant that allows one to have control over their memories, allowing you to set a timer and remove any memories developed within it. This is most popular with the SCP foundation."
+	cost = 2
+	path = /obj/item/organ/internal/augment/active/memory_inhibitor

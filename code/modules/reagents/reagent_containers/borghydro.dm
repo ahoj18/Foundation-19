@@ -14,12 +14,12 @@
 	var/charge_tick = 0
 	var/recharge_time = 5 //Time it takes for shots to recharge (in seconds)
 
-	var/list/reagent_ids = list(/datum/reagent/medicine/tricordrazine, /datum/reagent/medicine/inaprovaline, /datum/reagent/medicine/spaceacillin)
+	var/list/reagent_ids = list(/datum/reagent/medicine/tricordrazine, /datum/reagent/medicine/inaprovaline, /datum/reagent/medicine/penicillin)
 	var/list/reagent_volumes = list()
 	var/list/reagent_names = list()
 
 /obj/item/reagent_containers/borghypo/surgeon
-	reagent_ids = list(/datum/reagent/medicine/bicaridine, /datum/reagent/medicine/dexalin, /datum/reagent/medicine/painkiller/tramadol)
+	reagent_ids = list(/datum/reagent/medicine/bicaridine, /datum/reagent/medicine/inaprovaline, /datum/reagent/medicine/dexalin, /datum/reagent/medicine/painkiller/tramadol)
 
 /obj/item/reagent_containers/borghypo/crisis
 	reagent_ids = list(/datum/reagent/medicine/tricordrazine, /datum/reagent/medicine/inaprovaline, /datum/reagent/medicine/painkiller/tramadol, /datum/reagent/medicine/adrenaline, /datum/reagent/medicine/dexalin, /datum/reagent/medicine/painkiller/paracetamol)

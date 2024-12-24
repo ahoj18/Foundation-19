@@ -77,7 +77,7 @@
 	var/ranged_attack_delay = null
 	var/special_attack_delay = null
 
-	var/ranged_attack_cooldown = DEFAULT_ATTACK_COOLDOWN
+	var/ranged_attack_cooldown = CLICK_CD_ATTACK
 
 	//Mob interaction
 	var/list/friends = list()		// Mobs on this list wont get attacked regardless of faction status.
@@ -206,6 +206,17 @@
 	if(LAZYLEN(death_sounds))
 		playsound(src, pick(death_sounds), 50, TRUE)
 
+// Reset icon on revival
+/mob/living/simple_animal/rejuvenate()
+	var/was_dead = stat == DEAD
+	. = ..()
+	if(was_dead && stat != DEAD)
+		icon_state = icon_living
+		switch_from_dead_to_living_mob_list()
+		set_stat(CONSCIOUS)
+		set_density(initial(density))
+		bleed_ticks = 0
+
 /mob/living/simple_animal/proc/drop_loot()
 	if(!LAZYLEN(loot_list))
 		return
@@ -260,7 +271,7 @@
 			meat.SetName("[src.name] [meat.name]")
 			if(can_bleed)
 				var/obj/effect/decal/cleanable/blood/splatter/splat = new(get_turf(src))
-				splat.basecolor = bleed_colour
+				splat.basecolor = GetBloodColor()
 				splat.update_icon()
 			qdel(src)
 
@@ -277,7 +288,7 @@
 				var/hit_dir = get_dir(P.starting, src)
 				var/obj/effect/decal/cleanable/blood/B = blood_splatter(get_step(src, hit_dir), src, 1, hit_dir)
 				B.icon_state = pick("dir_splatter_1","dir_splatter_2")
-				B.basecolor = bleed_colour
+				B.basecolor = GetBloodColor()
 				var/scale = min(1, round(mob_size / MOB_MEDIUM, 0.1))
 				var/matrix/M = new()
 				B.transform = M.Scale(scale)
@@ -330,7 +341,7 @@
 	adjustBruteLoss(1)
 
 	var/obj/effect/decal/cleanable/blood/drip/drip = new(get_turf(src))
-	drip.basecolor = bleed_colour
+	drip.basecolor = GetBloodColor()
 	drip.update_icon()
 
 /mob/living/simple_animal/get_digestion_product()
@@ -363,7 +374,7 @@
 /mob/living/simple_animal/proc/PlayMovementSound()
 	playsound(src, movement_sound, 50, 1)
 
-/mob/living/simple_animal/movement_delay()
+/mob/living/simple_animal/movement_delay(decl/move_intent/using_intent = move_intent)
 	. = movement_cooldown
 
 	// Turf related slowdown
@@ -389,3 +400,32 @@
 	else
 		visible_message(SPAN_NOTICE("\The [user] is interrupted."))
 		set_AI_busy(FALSE)
+
+// Rough - Gibs
+// Coarse - Spawns a random(50% - 80%) amount of its buchering results
+/mob/living/simple_animal/Conversion914(mode = MODE_ONE_TO_ONE, mob/user = usr)
+	switch(mode)
+		if(MODE_ROUGH)
+			gib()
+			return null
+		if(MODE_COARSE)
+			death()
+			ghostize()
+			var/turf/T = get_turf(src)
+			var/list/return_items = list()
+			if(meat_type && meat_amount)
+				for(var/i = 1 to rand(round(meat_amount * 0.5), round(meat_amount * 0.8)))
+					return_items += new meat_type(T)
+			if(bone_material && bone_amount)
+				var/bone_count = rand(round(bone_amount * 0.5), round(bone_amount * 0.8))
+				var/material/M = SSmaterials.get_material_by_name(bone_material)
+				return_items += new M.stack_type(T, bone_count, bone_material)
+			if(skin_material && skin_amount)
+				var/skin_count = rand(round(skin_amount * 0.5), round(skin_amount * 0.8))
+				var/material/M = SSmaterials.get_material_by_name(skin_material)
+				return_items += new M.stack_type(T, skin_count, skin_material)
+			return return_items
+	return ..()
+
+/mob/living/simple_animal/GetBloodColor()
+	return bleed_colour

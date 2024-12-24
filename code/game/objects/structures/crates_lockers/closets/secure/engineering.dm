@@ -1,5 +1,5 @@
 /obj/structure/closet/secure_closet/engineering_chief
-	name = "chief engineer's locker"
+	name = "engineering director's locker"
 	req_access = list(ACCESS_ENGINEERING_LVL5)
 	icon_state = "securece1"
 	icon_closed = "securece"
@@ -41,7 +41,7 @@
 	return list(
 		/obj/item/clothing/gloves/insulated = 4,
 		/obj/item/storage/toolbox/electrical = 3,
-		/obj/item/module/power_control = 3,
+		/obj/item/power_control_module = 3,
 		/obj/item/device/multitool = 3
 	)
 

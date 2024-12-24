@@ -15,7 +15,7 @@
 		/obj/item/airalarm_electronics,
 		/obj/item/airlock_electronics,
 		/obj/item/tracker_electronics,
-		/obj/item/module/power_control,
+		/obj/item/power_control_module,
 		/obj/item/stock_parts,
 		/obj/item/frame,
 		/obj/item/camera_assembly,
@@ -213,7 +213,7 @@
 		var/resolved = wrapped.resolve_attackby(target,user,params)
 
 		//If resolve_attackby forces waiting before taking wrapped, we need to let it finish before doing the rest.
-		addtimer(CALLBACK(src, .proc/finish_using, target, user, params, force_holder, resolved), 0)
+		addtimer(CALLBACK(src, PROC_REF(finish_using), target, user, params, force_holder, resolved), 0)
 
 	else if(istype(target,/obj/item)) //Check that we're not pocketing a mob.
 		var/obj/item/I = target

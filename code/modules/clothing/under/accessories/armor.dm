@@ -9,6 +9,7 @@
 	gender = PLURAL
 	slot = ACCESSORY_SLOT_ARMOR_S
 	slots = 2 STORAGE_SLOTS
+	hidden_from_codex = FALSE
 
 /obj/item/clothing/accessory/storage/pouches/blue
 	desc = "A collection of blue pouches that can be attached to a plate carrier. Carries up to two items."
@@ -116,6 +117,19 @@
 		bomb = ARMOR_BOMB_PADDED
 		)
 	slowdown = 0.5
+
+/obj/item/clothing/accessory/armorplate/tactical/mtf
+	name = "mtf tactical armor plate"
+	desc = "A heavier armor plate with additional ablative coating. Attaches to a plate carrier. This one is specialized for MTF units."
+	icon_state = "armor_tactical"
+	armor = list(
+		melee = ARMOR_MELEE_RESISTANT,
+		bullet = ARMOR_BALLISTIC_RESISTANT,
+		laser = ARMOR_LASER_MAJOR,
+		energy = ARMOR_ENERGY_RESISTANT,
+		bomb = ARMOR_BOMB_PADDED
+		)
+	slowdown = 0
 
 /obj/item/clothing/accessory/armorplate/merc
 	name = "heavy armor plate"
@@ -401,3 +415,18 @@
 	name = "tan helmet cover"
 	desc = "A fabric cover for armored helmets. This one has a desert camouflage pattern."
 	icon_state = "helmcover_tan"
+
+/obj/item/clothing/accessory/armor/unobtainable/helmcover
+	name = "helmet cover"
+	desc = "A fabric cover for armored helmets."
+	icon_override = 'icons/mob/onmob/onmob_modular_armor.dmi'
+	icon = 'icons/obj/clothing/obj_suit_modular_armor.dmi'
+	accessory_icons = list(slot_tie_str = 'icons/mob/onmob/onmob_modular_armor.dmi', slot_head_str = 'icons/mob/onmob/onmob_modular_armor.dmi')
+	icon_state = "null"
+	slot = ACCESSORY_SLOT_HELM_C
+	body_location = HEAD
+
+/obj/item/clothing/accessory/armor/unobtainable/helmcover/un
+	name = "United Nations helmet cover"
+	desc = "A fabric cover for armored helmets. This one is in UN colors."
+	icon_state = "helmcover_blue"

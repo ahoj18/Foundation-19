@@ -16,7 +16,7 @@ var/list/ticket_panels = list()
 	tickets |= src
 	id = tickets.len
 	opened_time = world.time
-	addtimer(CALLBACK(src, .proc/timeoutcheck), 5 MINUTES)
+	addtimer(CALLBACK(src, PROC_REF(timeoutcheck)), 5 MINUTES)
 
 /datum/ticket/proc/timeoutcheck()
 	if(status == TICKET_OPEN)
@@ -207,6 +207,9 @@ var/list/ticket_panels = list()
 
 	var/datum/ticket/ticket = locate(href_list["ticket"])
 	if(!ticket)
+		return
+
+	if(!(check_rights(R_ADMIN|R_MOD, FALSE, usr)) && (ticket.owner.ckey != usr.ckey))
 		return
 
 	switch(href_list["action"])

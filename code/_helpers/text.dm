@@ -13,11 +13,6 @@
  * SQL sanitization
  */
 
-// Run all strings to be used in an SQL query through this proc first to properly escape out injection attempts.
-/proc/sanitizeSQL(t as text)
-	var/sqltext = dbcon.Quote(t);
-	return copytext(sqltext, 2, length(sqltext));//Quote() adds quotes around input, we already do that
-
 // Adds a prefix to the table parameter, used in SQL to unify all tables under a common prefix, i.e. "tegu__[tablename]"
 /proc/format_table_name(table as text)
 	return "" + table // TODO: Remove hardcoded table prefix, make config entry instead
@@ -28,7 +23,7 @@
 
 //Used for preprocessing entered text
 //Added in an additional check to alert players if input is too long
-/proc/sanitize(input, max_length = MAX_MESSAGE_LEN, encode = 1, trim = 1, extra = 1)
+/proc/sanitize(input, max_length = MAX_MESSAGE_LEN, encode = 0, trim = 1, extra = 1)
 	if(!input)
 		return
 
@@ -38,7 +33,7 @@
 			var/overflow = ((length(input)+1) - max_length)
 			to_chat(usr, SPAN_WARNING("Your message is too long by [overflow] character\s."))
 			return
-		input = copytext(input,1,max_length)
+		input = copytext_char(input,1,max_length)
 
 	if(extra)
 		input = replace_characters(input, list("\n"=" ","\t"=" "))
@@ -55,7 +50,7 @@
 		input = replace_characters(input, list("<"=" ", ">"=" "))
 
 	if(trim)
-		//Maybe, we need trim text twice? Here and before copytext?
+		//Maybe, we need trim text twice? Here and before copytext_char?
 		input = trim(input)
 
 	return input
@@ -126,7 +121,7 @@
 	if(number_of_alphanumeric < 2)	return		//protects against tiny names like "A" and also names like "' ' ' ' ' ' ' '"
 
 	if(last_char_group == 1)
-		output = copytext(output,1,length(output))	//removes the last character (in this case a space)
+		output = copytext_char(output,1,length(output))	//removes the last character (in this case a space)
 
 	for(var/bad_name in list("space","floor","wall","r-wall","monkey","unknown","inactive ai","plating"))	//prevents these common metagamey names
 		if(cmptext(output,bad_name))	return	//(not case sensitive)
@@ -159,18 +154,25 @@
 		dat.Cut(length(dat))
 	return jointext(dat, null)
 
-//Returns null if there is any bad text in the string
-/proc/reject_bad_text(text, max_length=512)
-	if(length(text) > max_length)	return			//message too long
+/// Checks the string for bad content (e.g. non-ASCII letters, whitespace only). If it's good, returns the string, otherwise returns null
+/proc/reject_bad_text(text, max_length = 512)
+	if(length(text) > max_length)
+		return			//message too long
 	var/non_whitespace = 0
-	for(var/i=1, i<=length(text), i++)
-		switch(text2ascii(text,i))
-			if(62,60,92,47)	return			//rejects the text if it contains these bad characters: <, >, \ or /
-			if(127 to 255)	return			//rejects non-ASCII letters
-			if(0 to 31)		return			//more weird stuff
-			if(32)			continue		//whitespace
-			else			non_whitespace = 1
-	if(non_whitespace)		return text		//only accepts the text if it has some non-spaces
+	for(var/i = 1, i <= length(text), i++)
+		switch(text2ascii(text, i))
+			if(62, 60, 92, 47)	// <, >, \, and /
+				return
+			if(127 to 255)		// non-ASCII characters
+				return
+			if(0 to 31)			// weird stuff
+				return
+			if(32)				// whitespace
+				continue
+			else
+				non_whitespace = 1
+	if(non_whitespace)	//only accepts the text if it has some non-spaces
+		return text
 
 
 //Old variant. Haven't dared to replace in some places.
@@ -255,14 +257,14 @@
 /proc/trim_left(text)
 	for (var/i = 1 to length(text))
 		if (text2ascii(text, i) > 32)
-			return copytext(text, i)
+			return copytext_char(text, i)
 	return ""
 
 //Returns a string with reserved characters and spaces after the last letter removed
 /proc/trim_right(text)
 	for (var/i = length(text), i > 0, i--)
 		if (text2ascii(text, i) > 32)
-			return copytext(text, 1, i + 1)
+			return copytext_char(text, 1, i + 1)
 	return ""
 
 //Returns a string with reserved characters and spaces before the first word and after the last word removed.
@@ -271,7 +273,7 @@
 
 //Returns a string with the first element of the string capitalized.
 /proc/capitalize(t as text)
-	return uppertext(copytext(t, 1, 2)) + copytext(t, 2)
+	return uppertext(copytext_char(t, 1, 2)) + copytext_char(t, 2)
 
 //This proc strips html properly, remove < > and all text between
 //for complete text sanitizing should be used sanitize()
@@ -295,6 +297,7 @@
 				input = copytext(input, (closetag + 1))
 		else
 			break
+			break
 
 	return input
 
@@ -306,15 +309,15 @@
 	if(length(text) != length(compare))
 		return 0
 	for(var/i = 1, i < length(text), i++)
-		var/a = copytext(text,i,i+1)
-		var/b = copytext(compare,i,i+1)
+		var/a = copytext_char(text,i,i+1)
+		var/b = copytext_char(compare,i,i+1)
 		//if it isn't both the same letter, or if they are both the replacement character
 		//(no way to know what it was supposed to be)
 		if(a != b)
 			if(a == replace) //if A is the replacement char
-				newtext = copytext(newtext,1,i) + b + copytext(newtext, i+1)
+				newtext = copytext_char(newtext,1,i) + b + copytext_char(newtext, i+1)
 			else if(b == replace) //if B is the replacement char
-				newtext = copytext(newtext,1,i) + a + copytext(newtext, i+1)
+				newtext = copytext_char(newtext,1,i) + a + copytext_char(newtext, i+1)
 			else //The lists disagree, Uh-oh!
 				return 0
 	return newtext
@@ -326,7 +329,7 @@
 		return 0
 	var/count = 0
 	for(var/i = 1, i <= length(text), i++)
-		var/a = copytext(text,i,i+1)
+		var/a = copytext_char(text,i,i+1)
 		if(a == character)
 			count++
 	return count
@@ -334,7 +337,7 @@
 /proc/reverse_text(text = "")
 	var/new_text = ""
 	for(var/i = length(text); i > 0; i--)
-		new_text += copytext(text, i, i+1)
+		new_text += copytext_char(text, i, i+1)
 	return new_text
 
 //Used in preferences' SetFlavorText and human's set_flavor verb
@@ -350,7 +353,7 @@
 
 //alternative copytext() for encoded text, doesn't break html entities (&#34; and other)
 /proc/copytext_preserve_html(text, first, last)
-	return html_encode(copytext(html_decode(text), first, last))
+	return html_encode(copytext_char(html_decode(text), first, last))
 
 /proc/create_text_tag(tagname, tagdesc = tagname, client/C = null)
 	if(!(C?.get_preference_value(/datum/client_preference/chat_tags) == GLOB.PREF_SHOW))
@@ -413,6 +416,7 @@
 #define strip_improper(input_text) replacetext(replacetext(input_text, "\proper", ""), "\improper", "")
 
 /proc/pencode2html(t)
+	t = pencode_acs2html(t)
 	t = replacetext(t, "\n", "<BR>")
 	t = replacetext(t, "\[center\]", "<center>")
 	t = replacetext(t, "\[/center\]", "</center>")
@@ -438,8 +442,12 @@
 	t = replacetext(t, "\[hr\]", "<HR>")
 	t = replacetext(t, "\[small\]", "<font size = \"1\">")
 	t = replacetext(t, "\[/small\]", "</font>")
-	t = replacetext(t, "\[list\]", "<ul>")
+	t = replacetext(t, "\[ulist\]", "<ul>")
+	t = replacetext(t, "\[/ulist\]", "</ul>")
+	t = replacetext(t, "\[list\]", "<ul>")		// kept for backwards compatability with pre-existing pencode
 	t = replacetext(t, "\[/list\]", "</ul>")
+	t = replacetext(t, "\[olist\]", "<ol>")
+	t = replacetext(t, "\[/olist\]", "</ol>")
 	t = replacetext(t, "\[table\]", "<table border=1 cellspacing=0 cellpadding=3 style='border: 1px solid black;'>")
 	t = replacetext(t, "\[/table\]", "</td></tr></table>")
 	t = replacetext(t, "\[grid\]", "<table>")
@@ -462,14 +470,26 @@
 	t = replacetext(t, "\[dealogo\]", "<img src = dea.png>")
 	t = replacetext(t, "\[intlogo\]", "<img src = int.png>")
 	t = replacetext(t, "\[triblogo\]", "<img src = trib.png>")
+	t = replacetext(t, "\[aiadlogo\]", "<img src = aiad.png>")
+	t = replacetext(t, "\[amdlogo\]", "<img src = amd.png>")
+	t = replacetext(t, "\[dcdlogo\]", "<img src = dcd.png>")
+	t = replacetext(t, "\[fsdlogo\]", "<img src = fsd.png>")
+	t = replacetext(t, "\[misilogo\]", "<img src = misi.png>")
+	t = replacetext(t, "\[patalogo\]", "<img src = pata.png>")
+	t = replacetext(t, "\[raisalogo\]", "<img src = raisa.png>")
 	t = replacetext(t, "\[goclogo\]", "<img src = ungoc.png>")
 	t = replacetext(t, "\[uiulogo\]", "<img src = uiu.png>")
-	t = replacetext(t, "\[thilogo\]", "<img src = thi.png>")
 	t = replacetext(t, "\[mcdlogo\]", "<img src = mcd.png>")
+	t = replacetext(t, "\[grlogo\]", "<img src = gr.png>")
 	t = replacetext(t, "\[arlogo\]", "<img src = ar.png>")
 	t = replacetext(t, "\[cilogo\]", "<img src = ci.png>")
 	t = replacetext(t, "\[shlogo\]", "<img src = sh.png>")
 	t = replacetext(t, "\[cotbglogo\]", "<img src = cotbg.png>")
+	t = replacetext(t, "\[coclogo\]", "<img src = coc.png>")
+	t = replacetext(t, "\[cmaxlogo\]", "<img src = cmax.png>")
+	t = replacetext(t, "\[mcflogo\]", "<img src = mcf.png>")
+	t = replacetext(t, "\[wwslogo\]", "<img src = wws.png>")
+	t = replacetext(t, "\[spclogo\]", "<img src = spc.png>")
 	return t
 
 //pencode translation to html for tags exclusive to digital files (currently email, nanoword, report editor fields,
@@ -483,6 +503,104 @@
 	text = replacetext(text, "\[/font\]", "</font>")
 	text = replacetext(text, "\[redacted\]", "<span class=\"redacted\">R E D A C T E D</span>")
 	return pencode2html(text)
+
+/// Scans for and replaces pencode ACS formats with usable HTML versions
+/proc/pencode_acs2html(text)
+	// raw text for regex
+	var/regex/scanner_nosecondary = new(@"\[acs item_number=(\w+) clearance_level=(\w+) containment_class=(\w+) disruption_class=(\w+) risk_class=(\w+)\]", "g")
+	var/regex/scanner_secondary = new(@"\[acs item_number=(\w+) clearance_level=(\w+) containment_class=(\w+) secondary_class=(\w+) disruption_class=(\w+) risk_class=(\w+)\]", "g")
+
+	var/newtext = text
+
+	newtext = scanner_nosecondary.Replace(newtext,
+@{"<div class="acs-hybrid-text-bar acs-hybrid-version acs-clear-$2 acs-$3 acs-$4 acs-$5">
+<div class="acs-item">
+<span><strong>Item#:</strong>$1</span>
+</div>
+<div class="acs-clear">
+<strong>Clearance Level $2:</strong> <span class="clearance-level-text">Clearance</span>
+</div>
+<div class="acs-contain-container">
+<div class="acs-contain">
+<div class="acs-text">
+<span><strong>Containment Class:</strong></span> <span>$3</span>
+</div>
+<div class="acs-icon">
+<img src="http://scp-wiki.wdfiles.com/local--files/component%3Aanomaly-class-bar/$3-icon.svg" alt="">
+</div>
+</div>
+<div class="acs-secondary">
+<div class="acs-text">
+<span><strong>Secondary Class:</strong></span> <span></span>
+</div>
+<div class="acs-icon">
+<img>
+</div>
+</div>
+</div>
+<div class="acs-disrupt">
+<div class="acs-text">
+<strong>Disruption Class:</strong> <span class="disruption-class-number">#</span>/$4
+</div>
+<div class="acs-icon">
+<img src="http://scp-wiki.wdfiles.com/local--files/component%3Aanomaly-class-bar/$4-icon.svg" alt="">
+</div>
+</div>
+<div class="acs-risk">
+<div class="acs-text">
+<strong>Risk Class:</strong> <span class="risk-class-number">#</span>/$5
+</div>
+<div class="acs-icon">
+<img src="http://scp-wiki.wdfiles.com/local--files/component%3Aanomaly-class-bar/$5-icon.svg" alt="">
+</div>
+</div>
+</div>"})
+
+	newtext = scanner_secondary.Replace(newtext,
+@{"<div class="acs-hybrid-text-bar acs-yes acs-hybrid-version acs-clear-$2 acs-$3 acs-$4 acs-$5 acs-$6">
+<div class="acs-item">
+<span><strong>Item#:</strong>$1</span>
+</div>
+<div class="acs-clear">
+<strong>Clearance Level $2:</strong> <span class="clearance-level-text">Clearance</span>
+</div>
+<div class="acs-contain-container">
+<div class="acs-contain">
+<div class="acs-text">
+<span><strong>Containment Class:</strong></span> <span>$3</span>
+</div>
+<div class="acs-icon">
+<img src="http://scp-wiki.wdfiles.com/local--files/component%3Aanomaly-class-bar/$3-icon.svg" alt="">
+</div>
+</div>
+<div class="acs-secondary">
+<div class="acs-text">
+<span><strong>Secondary Class:</strong></span> <span>$4</span>
+</div>
+<div class="acs-icon">
+<img src="http://scp-wiki.wdfiles.com/local--files/component%3Aanomaly-class-bar/$4-icon.svg" alt="">
+</div>
+</div>
+</div>
+<div class="acs-disrupt">
+<div class="acs-text">
+<strong>Disruption Class:</strong> <span class="disruption-class-number">#</span>/$5
+</div>
+<div class="acs-icon">
+<img src="http://scp-wiki.wdfiles.com/local--files/component%3Aanomaly-class-bar/$5-icon.svg" alt="">
+</div>
+</div>
+<div class="acs-risk">
+<div class="acs-text">
+<strong>Risk Class:</strong> <span class="risk-class-number">#</span>/$6
+</div>
+<div class="acs-icon">
+<img src="http://scp-wiki.wdfiles.com/local--files/component%3Aanomaly-class-bar/$6-icon.svg" alt="">
+</div>
+</div>
+</div>"})
+
+	return newtext
 
 //Will kill most formatting; not recommended.
 /proc/html2pencode(t)
@@ -510,8 +628,8 @@
 	t = replacetext(t, "</H3>", "\[/h3\]")
 	t = replacetext(t, "<li>", "\[*\]")
 	t = replacetext(t, "<HR>", "\[hr\]")
-	t = replacetext(t, "<ul>", "\[list\]")
-	t = replacetext(t, "</ul>", "\[/list\]")
+	t = replacetext(t, "<ul>", "\[ulist\]")
+	t = replacetext(t, "</ul>", "\[/ulist\]")
 	t = replacetext(t, "<table>", "\[grid\]")
 	t = replacetext(t, "</table>", "\[/grid\]")
 	t = replacetext(t, "<tr>", "\[row\]")
@@ -533,7 +651,6 @@
 	t = replacetext(t, "<img src = trib.png>", "\[triblogo\]")
 	t = replacetext(t, "<img src = ungoc.png>", "\[goclogo\]")
 	t = replacetext(t, "<img src = uiu.png>", "\[uiulogo\]")
-	t = replacetext(t, "<img src = thi.png>", "\[thilogo\]")
 	t = replacetext(t, "<img src = mcd.png>", "\[mcdlogo\]")
 	t = replacetext(t, "<img src = ar.png>", "\[arlogo\]")
 	t = replacetext(t, "<img src = ci.png>", "\[cilogo\]")
@@ -568,9 +685,9 @@
 	if(!next_space)	//trailing bs
 		return string
 
-	var/base = next_backslash == 1 ? "" : copytext(string, 1, next_backslash)
-	var/macro = lowertext(copytext(string, next_backslash + 1, next_space))
-	var/rest = next_backslash > leng ? "" : copytext(string, next_space + 1)
+	var/base = next_backslash == 1 ? "" : copytext_char(string, 1, next_backslash)
+	var/macro = lowertext(copytext_char(string, next_backslash + 1, next_space))
+	var/rest = next_backslash > leng ? "" : copytext_char(string, next_space + 1)
 
 	//See http://www.byond.com/docs/ref/info.html#/DM/text/macros
 	switch(macro)
@@ -647,8 +764,8 @@
 /proc/text2regex(text)
 	var/end = findlasttext(text, "/")
 	if (end > 2 && length(text) > 2 && text[1] == "/")
-		var/flags = end == length(text) ? FALSE : copytext(text, end + 1)
-		var/matcher = copytext(text, 2, end)
+		var/flags = end == length(text) ? FALSE : copytext_char(text, end + 1)
+		var/matcher = copytext_char(text, 2, end)
 		try
 			return flags ? regex(matcher, flags) : regex(matcher)
 		catch()
@@ -676,7 +793,7 @@
 	if(isnull(user_input)) // User pressed cancel
 		return
 	if(no_trim)
-		return copytext(html_encode(user_input), 1, max_length)
+		return copytext_char(html_encode(user_input), 1, max_length)
 	else
 		return trim(html_encode(user_input), max_length) //trim is "outside" because html_encode can expand single symbols into multiple symbols (such as turning < into &lt;)
 
@@ -695,7 +812,7 @@
 	if(isnull(user_input)) // User pressed cancel
 		return
 	if(no_trim)
-		return copytext(html_encode(user_input), 1, max_length)
+		return copytext_char(html_encode(user_input), 1, max_length)
 	else
 		return trim(html_encode(user_input), max_length)
 
@@ -708,3 +825,15 @@
 	else if(powerused < 1000000000) //Less than a GW
 		return "[round((powerused * 0.000001),0.001)] MW"
 	return "[round((powerused * 0.000000001),0.0001)] GW"
+
+/proc/count_fields_from_html(t)
+	//Count the fields
+	var/laststart = 1
+	var/fields = 0
+	while(fields < MAX_PAPER_FIELDS)
+		var/i = findtext(t, "<span class=\"paper_field\">", laststart)	//</span>
+		if(i==0)
+			break
+		laststart = i+1
+		fields++
+	return fields

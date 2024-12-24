@@ -165,7 +165,7 @@
 						nexttube = tube
 						break
 				if(!nexttube)
-					pod.set_dir(turn(pod.dir, 180))
+					pod.setDir(turn(pod.dir, 180))
 
 				if(icon_state == "closed" && pod)
 					pod.follow_tube()
@@ -315,13 +315,13 @@
 					break
 
 			if(current_tube == null)
-				set_dir(next_dir)
+				setDir(next_dir)
 				Move(get_step(loc, dir)) // Allow collisions when leaving the tubes.
 				break
 
 			last_delay = current_tube.enter_delay(src, next_dir)
 			sleep(last_delay)
-			set_dir(next_dir)
+			setDir(next_dir)
 			forceMove(next_loc) // When moving from one tube to another, skip collision and such.
 			set_density(current_tube.density)
 
@@ -338,7 +338,7 @@
 			do
 				sleep(last_delay)
 
-				if(!istype(loc, /turf/space))
+				if(!isspaceturf(loc))
 					last_delay++
 
 				if(last_delay > 10)
@@ -379,7 +379,7 @@
 			mob.forceMove(T)
 			mob.client.Move(get_step(T, direction), direction)
 
-			//if(moving && istype(loc, /turf/space))
+			//if(moving && isspaceturf(loc))
 				// Todo: If you get out of a moving pod in space, you should move as well.
 				//  Same direction as pod? Direcion you moved? Halfway between?
 
@@ -397,14 +397,14 @@
 								station.open_animation()
 
 						else if(direction in station.directions())
-							set_dir(direction)
+							setDir(direction)
 							station.launch_pod()
 					return
 
 			for(var/obj/structure/transit_tube/tube in loc)
 				if(dir in tube.directions())
 					if(tube.has_exit(direction))
-						set_dir(direction)
+						setDir(direction)
 						return
 
 

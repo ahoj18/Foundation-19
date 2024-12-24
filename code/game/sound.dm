@@ -16,18 +16,18 @@
 
 	for(var/P in listeners)
 		var/mob/M = P
-		if(!M || !M.client)
+		if(!M || !M.client || !M.can_hear())
 			continue
 		if(get_dist(M, turf_source) <= maxdistance)
 			var/turf/T = get_turf(M)
 
 			if(T?.z == turf_source.z && (!is_ambiance || M.get_preference_value(/datum/client_preference/play_ambiance) == GLOB.PREF_YES))
-				M.playsound_local(turf_source, soundin, vol, vary, frequency, falloff, is_global, extrarange, ignore_pressure)
+				M.playsound_local(turf_source, soundin, vol, vary, frequency, falloff, is_global, extrarange, ignore_pressure, source)
 
 var/const/FALLOFF_SOUNDS = 0.5
 
-/mob/proc/playsound_local(turf/turf_source, soundin, vol as num, vary, frequency, falloff, is_global, extrarange, ignore_pressure)
-	if(!src.client || ear_deaf > 0)
+/mob/proc/playsound_local(turf/turf_source, soundin, vol as num, vary, frequency, falloff, is_global, extrarange, ignore_pressure, atom/Ssource)
+	if(!src.client || ear_deaf > 0 || !can_hear(turf_source))
 		return
 	var/sound/S = soundin
 	if(!istype(S))
@@ -88,11 +88,11 @@ var/const/FALLOFF_SOUNDS = 0.5
 			var/mob/living/carbon/M = src
 			if (istype(M) && M.hallucination_power > 50 && M.chem_effects[CE_HALLUCINATION] < 1)
 				S.environment = PSYCHOTIC
-			else if (M.druggy)
+			else if (M.has_status_effect(/datum/status_effect/drugginess))
 				S.environment = DRUGGED
-			else if (M.drowsyness)
+			else if (M.has_status_effect(/datum/status_effect/drowsiness))
 				S.environment = DIZZY
-			else if (M.confused)
+			else if (M.has_status_effect(/datum/status_effect/confusion))
 				S.environment = DIZZY
 			else if (M.stat == UNCONSCIOUS)
 				S.environment = UNDERWATER
@@ -111,6 +111,8 @@ var/const/FALLOFF_SOUNDS = 0.5
 			S.environment = A.sound_env
 
 	sound_to(src, S)
+	if(Ssource)
+		SEND_SIGNAL(Ssource, COMSIG_OBJECT_SOUND_HEARD, src, soundin)
 
 /client/proc/playtitlemusic()
 	if (get_preference_value(/datum/client_preference/play_lobby_music) == GLOB.PREF_YES)

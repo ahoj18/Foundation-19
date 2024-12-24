@@ -84,7 +84,7 @@
 								/obj/item/cell/high                               = TRADER_THIS_TYPE,
 								/obj/item/cell/super                              = TRADER_THIS_TYPE,
 								/obj/item/cell/hyper                              = TRADER_THIS_TYPE,
-								/obj/item/module                                  = TRADER_SUBTYPES_ONLY,
+								/obj/item/power_control_module                    = TRADER_THIS_TYPE,
 								/obj/item/tracker_electronics                     = TRADER_THIS_TYPE)
 
 
@@ -119,7 +119,7 @@
 								/obj/item/clothing/under/cloud            = TRADER_BLACKLIST,
 								/obj/item/clothing/under/color            = TRADER_BLACKLIST,
 								/obj/item/clothing/under/dress            = TRADER_BLACKLIST,
-								/obj/item/clothing/under/ert              = TRADER_BLACKLIST,
+								/obj/item/clothing/under/mtf              = TRADER_BLACKLIST,
 								/obj/item/clothing/under/gimmick          = TRADER_BLACKLIST_ALL,
 								/obj/item/clothing/under/lawyer           = TRADER_BLACKLIST,
 								/obj/item/clothing/under/pj               = TRADER_BLACKLIST,
@@ -344,7 +344,7 @@ Sells devices, odds and ends, and medical stuff
 								)
 
 	possible_trading_items = list(/obj/item/storage/pill_bottle = TRADER_SUBTYPES_ONLY,
-								  /obj/item/storage/firstaid/fire  = TRADER_THIS_TYPE,
+								  /obj/item/storage/firstaid/burn  = TRADER_THIS_TYPE,
 								  /obj/item/storage/firstaid/toxin  = TRADER_THIS_TYPE,
 								  /obj/item/storage/firstaid/adv  = TRADER_THIS_TYPE,
 								  /obj/item/storage/box/bloodpacks  = TRADER_THIS_TYPE,
